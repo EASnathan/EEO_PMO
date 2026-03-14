@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EAS PMO Platform v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#080D1A;--bg1:#0D1526;--bg2:#111D35;--bg3:#172240;
+  --surface:#1A2845;--surfH:#1F3052;
+  --border:#243350;--borderL:#2E4070;
+  --text:#E8EDF5;--muted:#7A8BAA;--dim:#3A4A62;
+  --accent:#3B7FE8;--accentD:#1E3D6E;--accentG:rgba(59,127,232,0.12);
+  --green:#22C55E;--greenD:#14532D;--greenG:rgba(34,197,94,0.1);
+  --amber:#F59E0B;--amberD:#78350F;--amberG:rgba(245,158,11,0.1);
+  --red:#EF4444;--redD:#7F1D1D;--redG:rgba(239,68,68,0.1);
+  --grey:#64748B;--greyD:#1E293B;
+  --teal:#14B8A6;--tealD:#134E4A;
+  --purple:#A78BFA;--purpleD:#2E1065;
+  --font:'Outfit',sans-serif;
+  --mono:'DM Mono',monospace;
+  --display:'Syne',sans-serif;
+}
+body{background:var(--bg0);color:var(--text);font-family:var(--font);min-height:100vh;display:flex}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg0)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.fade{animation:fadeIn .18s ease forwards}
+.pulse{animation:pulse 2s ease infinite}
+
+/* ── SIDEBAR ── */
+#sidebar{width:220px;background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;min-height:100vh;position:sticky;top:0;height:100vh;overflow:hidden}
+.sb-logo{padding:16px 16px 12px;border-bottom:1px solid var(--border)}
+.sb-logo-sub{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:3px}
+.sb-logo-title{font-size:15px;font-weight:800;color:var(--text);font-family:var(--display)}
+.sb-live{display:flex;align-items:center;gap:6px;margin-top:6px}
+.sb-prog{padding:9px 16px 8px;border-bottom:1px solid var(--border)}
+.sb-prog-label{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--dim);text-transform:uppercase;margin-bottom:2px}
+.sb-prog-val{font-size:11px;color:var(--muted);line-height:1.5}
+nav{flex:1;padding:8px;overflow-y:auto}
+.nav-section{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);padding:10px 10px 4px;display:block}
+.nav-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:5px;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;margin-bottom:1px;text-align:left;transition:all .1s;font-family:var(--font);border-left:2px solid transparent}
+.nav-btn:hover{background:var(--bg3);color:var(--text)}
+.nav-btn.active{background:var(--accentG);color:var(--accent);font-weight:700;border-left-color:var(--accent)}
+.nav-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.nav-badge{background:var(--amberD);color:var(--amber);border-radius:3px;padding:0 5px;font-size:10px;font-weight:800;font-family:var(--mono);margin-left:auto}
+.nav-badge.red{background:var(--redD);color:var(--red)}
+.sb-footer{padding:8px 16px;border-top:1px solid var(--border);font-size:9px;color:var(--dim);font-family:var(--mono);display:flex;justify-content:space-between;align-items:center}
+.sb-clear{background:none;border:none;color:var(--dim);font-size:9px;cursor:pointer;font-family:var(--mono);padding:2px 4px;border-radius:3px;transition:color .1s}
+.sb-clear:hover{color:var(--red)}
+
+/* ── MAIN ── */
+#main{flex:1;overflow:auto}
+#content{max-width:1080px;margin:0 auto;padding:24px 26px 60px}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
+.card-hover{cursor:pointer;transition:background .1s}
+.card-hover:hover{background:var(--surfH)}
+.card-sm{padding:12px 14px}
+
+/* ── TYPOGRAPHY ── */
+.slabel{font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;display:block}
+.page-title{font-size:19px;font-weight:800;color:var(--text);font-family:var(--display);margin-bottom:4px}
+
+/* ── BADGES ── */
+.chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.2px;white-space:nowrap}
+.rag-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 7px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;transition:opacity .1s}
+.rag-chip:hover{opacity:.75}
+.rag-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+
+/* ── METRICS ── */
+.metrics{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;flex:1;min-width:110px;cursor:pointer;transition:all .1s}
+.metric:hover{background:var(--surfH);border-color:var(--borderL)}
+.metric-val{font-size:22px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;line-height:1}
+.metric-label{font-size:11px;font-weight:600;color:var(--text);margin-top:3px}
+.metric-sub{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* ── BAR ── */
+.bar-track{background:var(--bg2);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
+
+/* ── TABLES ── */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:6px 8px;color:var(--dim);font-weight:700;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:8px 8px;border-bottom:1px solid var(--bg3)}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:var(--bg3)}
+
+/* ── FORMS ── */
+.flabel{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block}
+.frow{margin-bottom:12px}
+.finp,.fsel,.ftxt{width:100%;background:var(--bg1);border:1px solid var(--border);border-radius:6px;padding:7px 11px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;transition:border-color .1s}
+.ftxt{resize:vertical}
+.finp:focus,.fsel:focus,.ftxt:focus{border-color:var(--accent)}
+.fgrid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* ── BUTTONS ── */
+.btn{padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:opacity .1s;border:1px solid}
+.btn:hover{opacity:.8}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-secondary{background:transparent;color:var(--accent);border-color:var(--accentD)}
+.btn-ghost{background:transparent;color:var(--muted);border-color:transparent}
+.btn-danger{background:transparent;color:var(--red);border-color:var(--redD)}
+.btn-amber{background:var(--amberG);color:var(--amber);border-color:var(--amberD)}
+.btn-green{background:var(--greenG);color:var(--green);border-color:var(--greenD)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:100%;max-width:660px;max-height:92vh;overflow:auto;box-shadow:0 40px 100px rgba(0,0,0,.7)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1}
+.modal-title{font-size:14px;font-weight:700;color:var(--text);font-family:var(--display)}
+.modal-close{background:none;border:none;color:var(--muted);font-size:17px;cursor:pointer;padding:0 2px}
+.modal-body{padding:18px 20px}
+.modal-section{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin:18px 0 10px;border-bottom:1px solid var(--border);padding-bottom:6px}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--border);margin:12px 0}
+
+/* ── LAYOUT ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.flex-row{display:flex;align-items:center;gap:10px}
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+.flex-col{display:flex;flex-direction:column;gap:8px}
+.gap-6{gap:6px}.gap-8{gap:8px}.gap-12{gap:12px}
+.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}
+.back-link{background:none;border:none;color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px;font-family:var(--font);display:inline-flex;align-items:center;gap:5px}
+.back-link:hover{text-decoration:underline}
+.empty{font-size:12px;color:var(--muted);padding:20px;text-align:center;border:1px dashed var(--border);border-radius:6px;line-height:1.7}
+.stream-bar{width:3px;border-radius:1px;flex-shrink:0}
+.filter-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.pill{padding:4px 11px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .1s}
+.pill:hover{border-color:var(--accent);color:var(--text)}
+.pill.active{background:var(--accentD);color:var(--accent);border-color:var(--accentD)}
+.prog-banner{background:linear-gradient(135deg,var(--bg3) 0%,var(--surface) 100%);border:1px solid var(--border);border-radius:8px;padding:18px 22px;margin-bottom:16px;position:relative;overflow:hidden}
+.prog-banner::after{content:'';position:absolute;top:0;right:0;width:280px;height:100%;background:linear-gradient(90deg,transparent,var(--accentG));pointer-events:none}
+
+/* ── RISK ── */
+.risk-card{border-left:3px solid;border-radius:6px;padding:10px 12px;margin-bottom:8px;background:var(--bg2)}
+.risk-high{border-color:#EF4444}
+.risk-med{border-color:#F59E0B}
+.risk-low{border-color:#22C55E}
+
+/* ── MEETINGS ── */
+.meeting-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:8px}
+.agenda-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg3);align-items:flex-start}
+.agenda-num{width:22px;height:22px;border-radius:50%;background:var(--accentD);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;font-family:var(--mono)}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;margin-bottom:16px;background:var(--bg2);border-radius:7px;padding:3px;border:1px solid var(--border)}
+.tab{padding:6px 14px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .1s;border:none;background:transparent;font-family:var(--font)}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+/* ── CALLOUT ── */
+.callout{border-radius:6px;padding:10px 14px;font-size:12px;line-height:1.6;margin-bottom:12px}
+.callout-info{background:var(--accentG);border:1px solid rgba(59,127,232,.2);color:#93C5FD}
+.callout-warn{background:var(--amberG);border:1px solid rgba(245,158,11,.2);color:#FCD34D}
+.callout-tip{background:var(--bg2);border:1px solid var(--border);color:var(--muted)}
+
+/* ── SAVE INDICATOR ── */
+#save-toast{position:fixed;bottom:20px;right:20px;background:var(--greenD);border:1px solid var(--green);color:var(--green);padding:8px 16px;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--mono);z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-sub">Envision AS</div>
+    <div class="sb-logo-title">PMO Platform</div>
+    <div class="sb-live">
+      <span class="pulse" style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block"></span>
+      <span style="font-size:10px;color:var(--green);font-family:var(--mono)">LIVE · DATA SAVED</span>
+    </div>
+  </div>
+  <div class="sb-prog">
+    <div class="sb-prog-label">Programme</div>
+    <div class="sb-prog-val" id="sb-prog-name">No programme set</div>
+  </div>
+  <nav id="nav"></nav>
+  <div class="sb-footer">
+    <span>EAS-PMO v3.0</span>
+    <button class="sb-clear" onclick="clearAllData()" title="Clear all data">⊗ reset</button>
+  </div>
+</div>
+
+<div id="main">
+  <div id="content" class="fade"></div>
+</div>
+
+<div id="modal-overlay" class="overlay" style="display:none" onclick="closeModalOverlay(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div id="save-toast">✓ Saved</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════════════
+const S = {
+  programme: { name:"", client:"", governanceBody:"SteerCo", lead:"", status:"Active", startDate:"", reportingFreq:"Weekly" },
+  streams: [],
+  initiatives: [],
+  activities: [],
+  decisions: [],
+  actions: [],
+  risks: [],
+  meetings: [],
+  view: "setup",
+  param: null,
+  _initFilter: "All",
+  _decTab: "Overdue",
+  _reportTab: "portfolio",
+  _meetTab: "steerco",
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PERSISTENCE — localStorage
+// ══════════════════════════════════════════════════════════════════════════════
+const STORE_KEY = 'eas-pmo-v3';
+
+function saveData(){
+  try{
+    const payload = {
+      programme:S.programme, streams:S.streams, initiatives:S.initiatives,
+      activities:S.activities, decisions:S.decisions, actions:S.actions,
+      risks:S.risks, meetings:S.meetings
+    };
+    localStorage.setItem(STORE_KEY, JSON.stringify(payload));
+    showToast();
+  } catch(e){ console.warn('Save failed:',e); }
+}
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return;
+    const d = JSON.parse(raw);
+    if(d.programme)   Object.assign(S.programme, d.programme);
+    if(d.streams)     S.streams     = d.streams;
+    if(d.initiatives) S.initiatives = d.initiatives;
+    if(d.activities)  S.activities  = d.activities;
+    if(d.decisions)   S.decisions   = d.decisions;
+    if(d.actions)     S.actions     = d.actions;
+    if(d.risks)       S.risks       = d.risks;
+    if(d.meetings)    S.meetings     = d.meetings;
+    // Migrate: ensure kpis, milestones, teamMembers arrays exist
+    S.initiatives.forEach(i=>{
+      if(!i.kpis) i.kpis=[];
+      if(!i.milestones) i.milestones=[];
+      if(!i.teamMembers) i.teamMembers=[];
+      if(!i.businessCase) i.businessCase={problem:"",baseline:"",actions:"",benefit:"",opBenefit:"",cost:"",payback:"",risks:"",recommendation:""};
+    });
+    S.streams.forEach(s=>{
+      if(!s.teamMembers) s.teamMembers=[];
+      if(!s.objectives) s.objectives="";
+    });
+  } catch(e){ console.warn('Load failed:',e); }
+}
+
+function clearAllData(){
+  if(!confirm('Clear ALL programme data and start fresh? This cannot be undone.')) return;
+  localStorage.removeItem(STORE_KEY);
+  location.reload();
+}
+window.clearAllData = clearAllData;
+
+let _toastTimer;
+function showToast(){
+  const t = document.getElementById('save-toast');
+  t.style.opacity='1';
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(()=>{ t.style.opacity='0'; }, 1600);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+const uid = () => `x${Date.now()}${Math.random().toString(36).slice(2,6)}`;
+const fmt = n => n>=1e6?`R${(n/1e6).toFixed(1)}m`:n>=1000?`R${(n/1000).toFixed(0)}k`:`R${n||0}`;
+const esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const today = () => new Date().toISOString().split("T")[0];
+const isOverdue = due => due && due < today();
+
+const ragAgg = rags => {
+  if(!rags.length) return "On Track";
+  if(rags.includes("Behind Schedule")) return "Behind Schedule";
+  if(rags.includes("At Risk")) return "At Risk";
+  if(rags.every(r=>r==="On Hold")) return "On Hold";
+  return "On Track";
+};
+
+const RAG_COLOR = {
+  "On Track":        {c:"#22C55E",d:"#14532D",b:"#22C55E33"},
+  "At Risk":         {c:"#F59E0B",d:"#78350F",b:"#F59E0B33"},
+  "Behind Schedule": {c:"#EF4444",d:"#7F1D1D",b:"#EF444433"},
+  "On Hold":         {c:"#64748B",d:"#1E293B",b:"#64748B33"},
+};
+const STATUS_COLOR = {
+  "Complete":    {c:"#22C55E",d:"#14532D"},
+  "In Progress": {c:"#3B7FE8",d:"#1E3D6E"},
+  "Not Started": {c:"#64748B",d:"#1E293B"},
+  "Blocked":     {c:"#EF4444",d:"#7F1D1D"},
+  "Open":        {c:"#F59E0B",d:"#78350F"},
+  "Overdue":     {c:"#EF4444",d:"#7F1D1D"},
+  "Made":        {c:"#22C55E",d:"#14532D"},
+  "Done":        {c:"#22C55E",d:"#14532D"},
+  "High":        {c:"#EF4444",d:"#7F1D1D"},
+  "Medium":      {c:"#F59E0B",d:"#78350F"},
+  "Low":         {c:"#22C55E",d:"#14532D"},
+};
+const STREAM_COLORS = ["#3B7FE8","#14B8A6","#22C55E","#A78BFA","#F59E0B","#EF4444","#EC4899","#F97316"];
+
+function ragChip(status, onclick=""){
+  const r=RAG_COLOR[status]||RAG_COLOR["On Hold"];
+  const pulse=status==="Behind Schedule"?' class="pulse"':'';
+  const clickAttr = onclick ? ` onclick="${onclick}"` : '';
+  return `<span class="rag-chip" style="background:${r.d};color:${r.c};border:1px solid ${r.b}"${clickAttr}><span${pulse} class="rag-dot" style="background:${r.c}"></span>${esc(status)}</span>`;
+}
+function chip(label,color,dim){
+  const s=STATUS_COLOR[label]||{c:color||"#64748B",d:dim||"#1E293B"};
+  return `<span class="chip" style="background:${s.d};color:${s.c};border:1px solid ${s.c}22">${esc(label)}</span>`;
+}
+function bar(pct,color,height=4){
+  return `<div class="bar-track" style="height:${height}px"><div class="bar-fill" style="width:${Math.min(100,pct||0)}%;background:${color||"#3B7FE8"};height:100%"></div></div>`;
+}
+function riskBadge(level){
+  const m={High:"#EF4444",Medium:"#F59E0B",Low:"#22C55E"};
+  return `<span style="background:${STATUS_COLOR[level]?.d||"#1E293B"};color:${m[level]||"#64748B"};border:1px solid ${m[level]||"#64748B"}33;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${esc(level)}</span>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════════════════════════════════════════
+const NAV = [
+  {section:"Programme"},
+  {id:"setup",       icon:"⊞", label:"Setup"},
+  {id:"dashboard",   icon:"⬡", label:"Dashboard"},
+  {section:"Work"},
+  {id:"streams",     icon:"◈", label:"Value Streams"},
+  {id:"initiatives", icon:"◇", label:"Initiatives"},
+  {id:"activities-all", icon:"✦", label:"All Activities"},
+  {section:"Governance"},
+  {id:"meetings",    icon:"⊙", label:"Meetings"},
+  {id:"decisions",   icon:"⊡", label:"Decisions"},
+  {id:"actions",     icon:"✓", label:"Actions"},
+  {id:"risks",       icon:"⚑", label:"Risk Register"},
+  {section:"Reports"},
+  {id:"reporting",   icon:"▤", label:"Reporting"},
+  {id:"templates",   icon:"☰", label:"Templates"},
+];
+
+function renderNav(){
+  const openDec = S.decisions.filter(d=>d.status==="Open"||d.status==="Overdue").length;
+  const overdueAct = S.actions.filter(a=>a.status==="Overdue"||isOverdue(a.due)&&a.status!=="Done").length;
+  const openRisk = S.risks.filter(r=>r.status!=="Closed").filter(r=>r.level==="High").length;
+  const badges = {decisions:openDec, actions:overdueAct, risks:openRisk};
+  document.getElementById("nav").innerHTML = NAV.map(item=>{
+    if(item.section) return `<span class="nav-section">${item.section}</span>`;
+    const isActive = S.view===item.id || (item.id==="streams" && (S.view==="stream-detail"||S.view==="stream-edit")) || (item.id==="initiatives" && S.view==="init-detail");
+    const b = badges[item.id];
+    return `<button class="nav-btn${isActive?" active":""}" onclick="go('${item.id}')">
+      <span class="nav-icon">${item.icon}</span>
+      <span style="flex:1">${item.label}</span>
+      ${b>0?`<span class="nav-badge${item.id==="actions"||item.id==="risks"?" red":""}">${b}</span>`:""}
+    </button>`;
+  }).join("");
+  document.getElementById("sb-prog-name").textContent = S.programme.name || "No programme set";
+}
+
+function go(view, param=null){
+  S.view=view; S.param=param;
+  renderNav(); render();
+  document.getElementById("main").scrollTo(0,0);
+}
+window.go=go;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════════════════════════════════════
+function openModal(title, html){
+  document.getElementById("modal-title").textContent=title;
+  document.getElementById("modal-body").innerHTML=html;
+  document.getElementById("modal-overlay").style.display="flex";
+}
+function closeModal(){
+  document.getElementById("modal-overlay").style.display="none";
+  document.getElementById("modal-body").innerHTML="";
+}
+function closeModalOverlay(e){
+  if(e.target===document.getElementById("modal-overlay")) closeModal();
+}
+window.closeModal=closeModal;
+window.closeModalOverlay=closeModalOverlay;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RENDER ROUTER
+// ══════════════════════════════════════════════════════════════════════════════
+function render(){
+  const el=document.getElementById("content");
+  el.className="fade";
+  void el.offsetWidth;
+  switch(S.view){
+    case "setup":          el.innerHTML=renderSetup(); break;
+    case "dashboard":      el.innerHTML=renderDashboard(); break;
+    case "streams":        el.innerHTML=renderStreams(); break;
+    case "stream-detail":  el.innerHTML=renderStreamDetail(S.param); break;
+    case "stream-edit":    el.innerHTML=renderStreamEdit(S.param); break;
+    case "initiatives":    el.innerHTML=renderInitiatives(); break;
+    case "init-detail":    el.innerHTML=renderInitDetail(S.param); break;
+    case "activities-all": el.innerHTML=renderAllActivities(); break;
+    case "meetings":       el.innerHTML=renderMeetings(); break;
+    case "decisions":      el.innerHTML=renderDecisions(); break;
+    case "actions":        el.innerHTML=renderActions(); break;
+    case "risks":          el.innerHTML=renderRisks(); break;
+    case "reporting":      el.innerHTML=renderReporting(); break;
+    case "templates":      el.innerHTML=renderTemplates(); break;
+    default: el.innerHTML="<div class='empty'>Unknown view</div>";
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════════════════════════════════════════
+function renderSetup(){
+  const p=S.programme;
+  return `
+  <span class="slabel">Programme Setup</span>
+  <div class="grid2" style="gap:18px">
+    <div>
+      <div class="card mb-12">
+        <span class="slabel">Programme Details</span>
+        <div class="frow"><label class="flabel">Programme Name</label><input class="finp" id="s-name" value="${esc(p.name)}" placeholder="e.g. Enza Enterprise Execution Office"></div>
+        <div class="frow"><label class="flabel">Client Organisation</label><input class="finp" id="s-client" value="${esc(p.client)}" placeholder="e.g. Enza Construction"></div>
+        <div class="fgrid2">
+          <div class="frow"><label class="flabel">Programme Lead</label><input class="finp" id="s-lead" value="${esc(p.lead)}" placeholder="Named person"></div>
+          <div class="frow"><label class="flabel">Governance Body Label</label><input class="finp" id="s-gb" value="${esc(p.governanceBody)}" placeholder="e.g. SteerCo"></div>
+          <div class="frow"><label class="flabel">Start Date</label><input class="finp" type="date" id="s-date" value="${esc(p.startDate)}"></div>
+          <div class="frow"><label class="flabel">Status</label>
+            <select class="fsel" id="s-status">${["Active","Setup","Closing"].map(o=>`<option${p.status===o?" selected":""}>${o}</option>`).join("")}</select>
+          </div>
+          <div class="frow"><label class="flabel">Workstream Update Frequency</label>
+            <select class="fsel" id="s-freq">${["Weekly","Fortnightly","Monthly"].map(o=>`<option${p.reportingFreq===o?" selected":""}>${o}</option>`).join("")}</select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveProgramme()">Save Programme</button>
+      </div>
+
+      <div class="card">
+        <div class="flex-between mb-12">
+          <span class="slabel" style="margin:0">Value Streams</span>
+          <button class="btn btn-sm btn-secondary" onclick="showAddStream()">+ Add Stream</button>
+        </div>
+        ${S.streams.length===0?`<div class="empty">No value streams yet.</div>`:`
+        <div class="flex-col">
+          ${S.streams.map(s=>`
+          <div class="flex-row" style="gap:10px;padding:8px 0;border-bottom:1px solid var(--bg3)">
+            <div style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0"></div>
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(s.name)}</div>
+              <div style="font-size:10px;color:var(--muted)">Lead: ${esc(s.lead)} · ${S.initiatives.filter(i=>i.streamId===s.id).length} initiatives</div>
+            </div>
+            <button class="btn btn-sm btn-ghost" onclick="go('stream-edit','${s.id}')">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteStream('${s.id}')">Remove</button>
+          </div>`).join("")}
+        </div>`}
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="slabel">Quick Start Guide</span>
+      <div style="font-size:12px;color:var(--muted);line-height:1.75">
+        ${[
+          ["1","Enter programme details and save"],
+          ["2","Add value streams — the broad areas you are improving (not individual projects)"],
+          ["3","For each stream, edit it to add team members and objectives"],
+          ["4","Go to Initiatives — add your first initiative and link it to a stream"],
+          ["5","Each initiative gets a Business Case, KPIs, milestones and activities"],
+          ["6","Use Meetings to run SteerCo and workstream reviews with agenda templates"],
+          ["7","Log decisions with named owners and mandatory consequence fields"],
+          ["8","Use Reporting for governance body views and resource utilisation"],
+        ].map(([n,t])=>`<div style="display:flex;gap:10px;margin-bottom:9px;align-items:flex-start"><span style="background:var(--accentD);color:var(--accent);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;margin-top:1px">${n}</span><span>${t}</span></div>`).join("")}
+        <div class="divider"></div>
+        <div style="font-size:10px;color:var(--dim)"><strong style="color:var(--muted)">Data is saved automatically</strong> to your browser. It survives tab closes and page refreshes. To start fresh: use the ⊗ reset button in the bottom-left corner.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function saveProgramme(){
+  S.programme.name=document.getElementById("s-name").value.trim();
+  S.programme.client=document.getElementById("s-client").value.trim();
+  S.programme.lead=document.getElementById("s-lead").value.trim();
+  S.programme.governanceBody=document.getElementById("s-gb").value.trim()||"SteerCo";
+  S.programme.startDate=document.getElementById("s-date").value;
+  S.programme.status=document.getElementById("s-status").value;
+  S.programme.reportingFreq=document.getElementById("s-freq").value;
+  saveData(); renderNav(); render();
+}
+window.saveProgramme=saveProgramme;
+
+function showAddStream(){
+  const used=S.streams.length;
+  openModal("Add Value Stream",`
+    <div class="frow"><label class="flabel">Stream Name — plain, not jargon (e.g. "Project Performance")</label><input class="finp" id="m-sname" placeholder="e.g. Commercial Strength"></div>
+    <div class="frow"><label class="flabel">Stream Lead</label><input class="finp" id="m-slead" placeholder="Named person responsible"></div>
+    <div class="frow"><label class="flabel">Objectives (one sentence)</label><input class="finp" id="m-sobj" placeholder="What this stream is trying to improve"></div>
+    <div class="frow"><label class="flabel">Colour</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        ${STREAM_COLORS.map((c,i)=>`<div onclick="selStreamColor('${c}')" id="sc-${i}" style="width:26px;height:26px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${i===used%STREAM_COLORS.length?"#fff":"transparent"}" data-color="${c}"></div>`).join("")}
+      </div>
+      <input type="hidden" id="m-scolor" value="${STREAM_COLORS[used%STREAM_COLORS.length]}">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addStream()">Add Stream</button>
+    </div>`);
+}
+window.showAddStream=showAddStream;
+
+function selStreamColor(c){
+  document.getElementById("m-scolor").value=c;
+  document.querySelectorAll("[id^='sc-']").forEach(el=>{el.style.border=el.dataset.color===c?"2px solid #fff":"2px solid transparent";});
+}
+window.selStreamColor=selStreamColor;
+
+function addStream(){
+  const name=document.getElementById("m-sname").value.trim();
+  const lead=document.getElementById("m-slead").value.trim();
+  if(!name) return alert("Stream name required.");
+  S.streams.push({id:uid(),name,lead,color:document.getElementById("m-scolor").value,objectives:document.getElementById("m-sobj").value.trim(),teamMembers:[]});
+  closeModal(); saveData(); render();
+}
+window.addStream=addStream;
+
+function deleteStream(id){
+  if(!confirm("Remove this stream? Initiatives in it will remain but lose their stream assignment.")) return;
+  S.streams=S.streams.filter(s=>s.id!==id);
+  saveData(); render();
+}
+window.deleteStream=deleteStream;
+
+// ── STREAM EDIT (full page)
+function renderStreamEdit(id){
+  const s=S.streams.find(s=>s.id===id);
+  if(!s) return `<button class="back-link" onclick="go('setup')">← Back</button><div class="empty">Stream not found.</div>`;
+  const inits=S.initiatives.filter(i=>i.streamId===id);
+  return `
+  <button class="back-link" onclick="go('setup')">← Back to Setup</button>
+  <div class="page-title" style="margin-bottom:16px">Edit: ${esc(s.name)}</div>
+  <div class="grid2" style="gap:18px">
+    <div>
+      <div class="card mb-12">
+        <span class="slabel">Stream Details</span>
+        <div class="frow"><label class="flabel">Stream Name</label><input class="finp" id="se-name" value="${esc(s.name)}"></div>
+        <div class="frow"><label class="flabel">Stream Lead</label><input class="finp" id="se-lead" value="${esc(s.lead)}" placeholder="Named person"></div>
+        <div class="frow"><label class="flabel">Objectives</label><textarea class="ftxt" id="se-obj" rows="2">${esc(s.objectives||"")}</textarea></div>
+        <div class="frow"><label class="flabel">Colour</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+            ${STREAM_COLORS.map((c,i)=>`<div onclick="selStreamColor('${c}')" id="sc-${i}" style="width:26px;height:26px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===s.color?"#fff":"transparent"}" data-color="${c}"></div>`).join("")}
+          </div>
+          <input type="hidden" id="m-scolor" value="${s.color}">
+        </div>
+        <button class="btn btn-primary" onclick="saveStreamEdit('${id}')">Save Changes</button>
+      </div>
+
+      <div class="card">
+        <div class="flex-between mb-12">
+          <span class="slabel" style="margin:0">Team Members</span>
+          <button class="btn btn-sm btn-secondary" onclick="showAddStreamMember('${id}')">+ Add Member</button>
+        </div>
+        ${s.teamMembers.length===0?`<div class="empty">No team members added yet.</div>`:`
+        <div class="flex-col">
+          ${s.teamMembers.map((m,i)=>`
+          <div class="flex-row" style="padding:7px 0;border-bottom:1px solid var(--bg3)">
+            <div style="width:28px;height:28px;border-radius:50%;background:${s.color}22;color:${s.color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${m.name.charAt(0).toUpperCase()}</div>
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(m.name)}</div>
+              <div style="font-size:10px;color:var(--muted)">${esc(m.role)} · ${m.hours||0}h/wk</div>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="removeStreamMember('${id}',${i})">×</button>
+          </div>`).join("")}
+        </div>`}
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="slabel">Initiatives in this Stream</span>
+      ${inits.length===0?`<div class="empty">No initiatives yet.</div>`:`
+      <div class="flex-col">
+        ${inits.map(init=>`
+        <div class="card card-hover card-sm" onclick="go('init-detail','${init.id}')">
+          <div class="flex-between">
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(init.name)}</div>
+            ${ragChip(init.rag)}
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">Lead: ${esc(init.lead)}</div>
+        </div>`).join("")}
+      </div>`}
+      <div style="margin-top:14px">
+        <button class="btn btn-secondary btn-sm" onclick="go('initiatives')">Add Initiative →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function saveStreamEdit(id){
+  const s=S.streams.find(s=>s.id===id);
+  if(!s) return;
+  s.name=document.getElementById("se-name").value.trim()||s.name;
+  s.lead=document.getElementById("se-lead").value.trim();
+  s.objectives=document.getElementById("se-obj").value.trim();
+  s.color=document.getElementById("m-scolor").value;
+  saveData(); go("stream-edit",id);
+}
+window.saveStreamEdit=saveStreamEdit;
+
+function showAddStreamMember(streamId){
+  openModal("Add Team Member",`
+    <div class="frow"><label class="flabel">Full Name</label><input class="finp" id="m-mname" placeholder="e.g. Thabo Mokoena"></div>
+    <div class="fgrid2">
+      <div class="frow"><label class="flabel">Role</label><input class="finp" id="m-mrole" placeholder="e.g. Site Manager"></div>
+      <div class="frow"><label class="flabel">Hours / Week on this stream</label><input class="finp" type="number" id="m-mhours" placeholder="e.g. 8" min="0"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addStreamMember('${streamId}')">Add Member</button>
+    </div>`);
+}
+window.showAddStreamMember=showAddStreamMember;
+
+function addStreamMember(streamId){
+  const s=S.streams.find(s=>s.id===streamId);
+  if(!s) return;
+  const name=document.getElementById("m-mname").value.trim();
+  if(!name) return;
+  if(!s.teamMembers) s.teamMembers=[];
+  s.teamMembers.push({name,role:document.getElementById("m-mrole").value.trim(),hours:parseInt(document.getElementById("m-mhours").value)||0});
+  closeModal(); saveData(); go("stream-edit",streamId);
+}
+window.addStreamMember=addStreamMember;
+
+function removeStreamMember(streamId,idx){
+  const s=S.streams.find(s=>s.id===streamId);
+  if(!s||!s.teamMembers) return;
+  s.teamMembers.splice(idx,1);
+  saveData(); go("stream-edit",streamId);
+}
+window.removeStreamMember=removeStreamMember;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════════════════════
+function renderDashboard(){
+  const active=S.initiatives.filter(i=>i.portfolioStatus==="Active");
+  const onTrack=active.filter(i=>i.rag==="On Track").length;
+  const atRisk=active.filter(i=>i.rag==="At Risk").length;
+  const behind=active.filter(i=>i.rag==="Behind Schedule").length;
+  const onHold=active.filter(i=>i.rag==="On Hold").length;
+  const totalB=active.reduce((s,i)=>s+i.benefit,0);
+  const totalA=active.reduce((s,i)=>s+(i.actual||0),0);
+  const openDec=S.decisions.filter(d=>d.status==="Open"||d.status==="Overdue");
+  const overdueAct=S.actions.filter(a=>a.status==="Overdue"||isOverdue(a.due)&&a.status!=="Done");
+  const highRisk=S.risks.filter(r=>r.level==="High"&&r.status!=="Closed");
+  const pct=active.length?Math.round((onTrack/active.length)*100):0;
+
+  // Filtered view state
+  const df=S._dashFilter||"All";
+
+  return `
+  <div class="prog-banner">
+    <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:5px">Active Programme</div>
+    <div style="font-size:19px;font-weight:800;color:var(--text);font-family:var(--display);margin-bottom:10px">${esc(S.programme.name||"No programme name set")}</div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      ${[["Lead",S.programme.lead||"—"],["Governance",S.programme.governanceBody||"SteerCo"],["Status",S.programme.status||"Active"],["Since",S.programme.startDate||"—"],["Update Cadence",S.programme.reportingFreq||"Weekly"]].map(([l,v])=>`
+      <div><div style="font-size:9px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:2px">${l}</div><div style="font-size:11px;color:var(--muted)">${esc(v)}</div></div>`).join("")}
+    </div>
+  </div>
+
+  <!-- Clickable metrics — drill down -->
+  <div class="metrics">
+    <div class="metric" onclick="drillDash('On Track')" style="border-top:3px solid #22C55E">
+      <div class="metric-val" style="color:#22C55E">${onTrack}</div>
+      <div class="metric-label">On Track</div>
+      <div class="metric-sub">${pct}% of portfolio · click to drill</div>
+    </div>
+    <div class="metric" onclick="drillDash('At Risk')" style="border-top:3px solid #F59E0B">
+      <div class="metric-val" style="color:#F59E0B">${atRisk}</div>
+      <div class="metric-label">At Risk</div>
+      <div class="metric-sub">Need a plan · click to drill</div>
+    </div>
+    <div class="metric" onclick="drillDash('Behind Schedule')" style="border-top:3px solid #EF4444">
+      <div class="metric-val" style="color:#EF4444">${behind}</div>
+      <div class="metric-label">Behind Schedule</div>
+      <div class="metric-sub">Immediate action · click to drill</div>
+    </div>
+    <div class="metric" onclick="drillDash('On Hold')" style="border-top:3px solid #64748B">
+      <div class="metric-val" style="color:#64748B">${onHold}</div>
+      <div class="metric-label">On Hold</div>
+      <div class="metric-sub">Paused by decision</div>
+    </div>
+    <div class="metric" onclick="go('reporting')" style="border-top:3px solid #3B7FE8">
+      <div class="metric-val" style="color:#3B7FE8">${fmt(totalB)}</div>
+      <div class="metric-label">Benefit Target</div>
+      <div class="metric-sub">${fmt(totalA)} realised</div>
+    </div>
+    <div class="metric" onclick="go('decisions')" style="border-top:3px solid #F59E0B">
+      <div class="metric-val" style="color:#F59E0B">${openDec.length}</div>
+      <div class="metric-label">Open Decisions</div>
+      <div class="metric-sub">Click to view all</div>
+    </div>
+    <div class="metric" onclick="go('risks')" style="border-top:3px solid #EF4444">
+      <div class="metric-val" style="color:#EF4444">${highRisk.length}</div>
+      <div class="metric-label">High Risks</div>
+      <div class="metric-sub">${S.risks.filter(r=>r.status!=="Closed").length} open total</div>
+    </div>
+  </div>
+
+  <!-- Drilldown filter -->
+  ${df!=="All"?`<div class="callout callout-warn" style="display:flex;justify-content:space-between;align-items:center">
+    <span>Showing <strong>${df}</strong> initiatives only (${active.filter(i=>i.rag===df).length} of ${active.length})</span>
+    <button class="btn btn-sm btn-ghost" onclick="drillDash('All')">Show all</button>
+  </div>`:""}
+
+  <div class="grid2" style="gap:14px">
+    <!-- Stream Health — clickable -->
+    <div class="card">
+      <span class="slabel">Focus Area Health</span>
+      ${S.streams.length===0?`<div class="empty">No value streams yet.<br><button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="go('setup')">Go to Setup →</button></div>`:""}
+      ${S.streams.map(s=>{
+        const si=active.filter(i=>i.streamId===s.id);
+        const agg=ragAgg(si.map(i=>i.rag));
+        const tb=si.reduce((sum,i)=>sum+i.benefit,0);
+        return `<div class="flex-row card-hover" style="padding:9px 6px;border-bottom:1px solid var(--border);border-radius:4px" onclick="go('stream-detail','${s.id}')">
+          <div class="stream-bar" style="height:36px;background:${s.color}"></div>
+          <div style="flex:1;padding-left:8px">
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(s.name)}</div>
+            <div style="font-size:10px;color:var(--muted)">${si.length} initiatives${tb>0?" · "+fmt(tb):""}</div>
+          </div>
+          ${ragChip(agg,`go('stream-detail','${s.id}')`)}
+        </div>`;
+      }).join("")}
+    </div>
+
+    <!-- Urgent panel -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="flex-between mb-8">
+          <span class="slabel" style="margin:0">Decisions Required Now</span>
+          <button class="btn btn-sm btn-ghost" onclick="go('decisions')">All →</button>
+        </div>
+        ${openDec.length===0?`<div style="font-size:12px;color:var(--muted)">No open decisions.</div>`:""}
+        ${openDec.slice(0,3).map(d=>`
+        <div class="card-hover" style="border-left:2px solid ${d.status==="Overdue"?"#EF4444":"#F59E0B"};padding:8px 10px;margin-bottom:6px;border-radius:4px;background:var(--bg2)" onclick="showRecordDecision('${d.id}')">
+          <div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.4">${esc(d.description)}</div>
+          <div style="display:flex;gap:8px;margin-top:3px;align-items:center">${chip(d.status)}<span style="font-size:10px;color:var(--muted)">→ ${esc(d.neededFrom)} · ${esc(d.due)}</span></div>
+        </div>`).join("")}
+      </div>
+      <div class="card">
+        <div class="flex-between mb-8">
+          <span class="slabel" style="margin:0">Overdue Actions</span>
+          <button class="btn btn-sm btn-ghost" onclick="go('actions')">All →</button>
+        </div>
+        ${overdueAct.length===0?`<div style="font-size:12px;color:var(--muted)">None overdue. 👌</div>`:""}
+        ${overdueAct.slice(0,3).map(a=>`
+        <div style="border-left:2px solid #EF4444;padding:7px 10px;margin-bottom:6px;border-radius:4px;background:var(--bg2)">
+          <div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.4">${esc(a.desc)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(a.owner)} · ${esc(a.due)}</div>
+        </div>`).join("")}
+      </div>
+    </div>
+
+    <!-- Initiative Table — drillable -->
+    <div class="card" style="grid-column:1/-1">
+      <div class="flex-between mb-12">
+        <span class="slabel" style="margin:0">Portfolio — ${df==="All"?"All Active":df} Initiatives</span>
+        <button class="btn btn-sm btn-primary" onclick="showAddInit()">+ Add Initiative</button>
+      </div>
+      ${active.filter(i=>df==="All"||i.rag===df).length===0?`<div class="empty">No initiatives${df!=="All"?" with status: "+df:""}.</div>`:`
+      <table>
+        <thead><tr><th>Initiative</th><th>Focus Area</th><th>Lead</th><th>Status</th><th>Milestone</th><th>Benefit</th><th>Score</th></tr></thead>
+        <tbody>
+          ${active.filter(i=>df==="All"||i.rag===df).map(init=>{
+            const st=S.streams.find(s=>s.id===init.streamId);
+            const ms=init.milestones?init.milestones.filter(m=>m.status!=="Complete").sort((a,b)=>a.date>b.date?1:-1)[0]:null;
+            return `<tr class="clickable" onclick="go('init-detail','${init.id}')">
+              <td style="font-weight:600;color:var(--text)">${esc(init.name)}</td>
+              <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:${st?.color||"#64748B"}"></span><span style="color:var(--muted)">${esc(st?.name||"—")}</span></span></td>
+              <td style="color:var(--muted)">${esc(init.lead)}</td>
+              <td>${ragChip(init.rag)}</td>
+              <td style="font-size:10px;color:var(--muted)">${ms?esc(ms.name)+" · "+esc(ms.date):"—"}</td>
+              <td style="font-family:var(--mono);color:var(--muted)">${init.benefit>0?fmt(init.benefit):"—"}</td>
+              <td style="font-family:var(--mono);font-weight:700;color:var(--accent)">${(init.priority||0).toFixed(1)}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>`}
+    </div>
+  </div>`;
+}
+
+function drillDash(filter){
+  S._dashFilter=filter;
+  render();
+}
+window.drillDash=drillDash;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// STREAMS VIEW
+// ══════════════════════════════════════════════════════════════════════════════
+function renderStreams(){
+  if(S.streams.length===0) return `
+    <div class="flex-between mb-16"><span class="slabel" style="margin:0">Value Streams</span></div>
+    <div class="empty" style="padding:40px">No value streams yet.<br><br>
+      <button class="btn btn-primary btn-sm" onclick="go('setup')">Go to Setup to add streams →</button></div>`;
+
+  return `
+  <div class="flex-between mb-16">
+    <span class="slabel" style="margin:0">Value Streams</span>
+    <button class="btn btn-sm btn-secondary" onclick="go('setup')">+ Add Stream</button>
+  </div>
+  <div class="grid2">
+    ${S.streams.map(s=>{
+      const si=S.initiatives.filter(i=>i.streamId===s.id&&i.portfolioStatus==="Active");
+      const agg=ragAgg(si.map(i=>i.rag));
+      const tb=si.reduce((sum,i)=>sum+i.benefit,0);
+      const totalH=(s.teamMembers||[]).reduce((sum,m)=>sum+m.hours,0);
+      return `<div class="card" style="border-top:3px solid ${s.color}">
+        <div class="flex-between" style="margin-bottom:6px">
+          <div style="font-size:15px;font-weight:800;color:var(--text);font-family:var(--display)">${esc(s.name)}</div>
+          ${ragChip(agg)}
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Lead: ${esc(s.lead)}</div>
+        ${s.objectives?`<div style="font-size:11px;color:var(--dim);margin-bottom:12px;line-height:1.5;font-style:italic">"${esc(s.objectives)}"</div>`:""}
+        <div style="display:flex;gap:16px;margin-bottom:12px">
+          <div><div style="font-size:20px;font-weight:800;color:${s.color};font-family:var(--mono)">${si.length}</div><div style="font-size:10px;color:var(--muted)">initiatives</div></div>
+          ${tb>0?`<div><div style="font-size:20px;font-weight:800;color:var(--green);font-family:var(--mono)">${fmt(tb)}</div><div style="font-size:10px;color:var(--muted)">target</div></div>`:""}
+          ${totalH>0?`<div><div style="font-size:20px;font-weight:800;color:var(--accent);font-family:var(--mono)">${totalH}</div><div style="font-size:10px;color:var(--muted)">h/wk</div></div>`:""}
+        </div>
+        ${(s.teamMembers||[]).length>0?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px">
+          ${s.teamMembers.map(m=>`<span style="background:${s.color}22;color:${s.color};padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600">${m.name.split(" ")[0]}</span>`).join("")}
+        </div>`:""}
+        <div class="flex-row gap-8">
+          <button class="btn btn-sm btn-secondary" onclick="go('stream-detail','${s.id}')">View Initiatives</button>
+          <button class="btn btn-sm btn-ghost" onclick="go('stream-edit','${s.id}')">Edit</button>
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function renderStreamDetail(id){
+  const stream=S.streams.find(s=>s.id===id);
+  if(!stream) return `<button class="back-link" onclick="go('streams')">← Back</button><div class="empty">Stream not found.</div>`;
+  const inits=S.initiatives.filter(i=>i.streamId===id);
+  const active=inits.filter(i=>i.portfolioStatus==="Active");
+  return `
+  <button class="back-link" onclick="go('streams')">← All Focus Areas</button>
+  <div class="flex-between" style="margin-bottom:16px">
+    <div style="border-left:3px solid ${stream.color};padding-left:12px">
+      <div class="page-title">${esc(stream.name)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">Lead: ${esc(stream.lead)}</div>
+    </div>
+    <div class="flex-row gap-8">
+      <button class="btn btn-sm btn-ghost" onclick="go('stream-edit','${id}')">Edit Stream</button>
+      <button class="btn btn-sm btn-primary" onclick="showAddInit('${id}')">+ Add Initiative</button>
+    </div>
+  </div>
+  ${stream.objectives?`<div class="callout callout-tip" style="margin-bottom:14px"><strong>Objective:</strong> ${esc(stream.objectives)}</div>`:""}
+  <span class="slabel">Initiatives in this area (${inits.length})</span>
+  ${inits.length===0?`<div class="empty">No initiatives yet.</div>`:""}
+  <div class="flex-col">
+    ${inits.map(init=>{
+      const acts=S.activities.filter(a=>a.initId===init.id);
+      const done=acts.filter(a=>a.status==="Complete").length;
+      const pct=acts.length?Math.round((done/acts.length)*100):0;
+      return `<div class="card card-hover" onclick="go('init-detail','${init.id}')">
+        <div class="flex-between" style="gap:12px;flex-wrap:wrap">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">${esc(init.name)}</div>
+            <div style="font-size:10px;color:var(--muted)">Lead: ${esc(init.lead)} · ${acts.length} activities · ${init.weeklyHours||0}h/wk${init.benefit>0?" · Target: "+fmt(init.benefit):""}</div>
+          </div>
+          ${ragChip(init.rag)}
+        </div>
+        ${acts.length>0?`<div style="margin-top:8px">${bar(pct,stream.color)}</div>`:""}
+        ${init.kpis?.[0]?`<div style="font-size:10px;color:var(--dim);margin-top:5px;font-family:var(--mono)">KPI: ${esc(init.kpis[0].name)} · Now: <span style="color:var(--accent)">${esc(init.kpis[0].current)}</span> → ${esc(init.kpis[0].target)}</div>`:""}
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INITIATIVES
+// ══════════════════════════════════════════════════════════════════════════════
+function renderInitiatives(){
+  const f=S._initFilter||"All";
+  const filtered=f==="All"?S.initiatives:S.initiatives.filter(i=>i.rag===f||i.portfolioStatus===f);
+  return `
+  <div class="flex-between mb-12">
+    <span class="slabel" style="margin:0">All Initiatives</span>
+    <button class="btn btn-sm btn-primary" onclick="showAddInit()">+ New Initiative</button>
+  </div>
+  <div class="filter-pills">
+    ${["All","On Track","At Risk","Behind Schedule","On Hold","Active","Proposed"].map(f2=>`<button class="pill${f===f2?" active":""}" onclick="setIF('${f2}')">${f2}</button>`).join("")}
+  </div>
+  ${filtered.length===0?`<div class="empty">No initiatives${f!=="All"?" with this status":""}.</div>`:""}
+  <div class="flex-col">
+    ${filtered.map(init=>{
+      const st=S.streams.find(s=>s.id===init.streamId);
+      const acts=S.activities.filter(a=>a.initId===init.id);
+      const done=acts.filter(a=>a.status==="Complete").length;
+      const pct=acts.length?(done/acts.length)*100:0;
+      const hasBC=init.businessCase?.problem;
+      return `<div class="card card-hover" onclick="go('init-detail','${init.id}')">
+        <div class="flex-row" style="align-items:flex-start">
+          <div class="stream-bar" style="min-height:44px;background:${st?.color||"#64748B"};margin-top:2px"></div>
+          <div style="flex:1;padding-left:10px">
+            <div class="flex-between" style="flex-wrap:wrap;gap:8px">
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">${esc(init.name)}</div>
+                <div style="font-size:10px;color:var(--muted)">${esc(st?.name||"No stream")} · ${esc(init.lead||"No lead")} · ${acts.length} activities (${done} done)</div>
+              </div>
+              <div class="flex-row gap-6">
+                ${!hasBC?`<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--amber);background:var(--amberD);padding:2px 7px;border-radius:3px">No Business Case</span>`:""}
+                ${ragChip(init.rag)}
+              </div>
+            </div>
+            ${acts.length>0?`<div style="margin-top:7px">${bar(pct,st?.color||"#3B7FE8")}</div>`:""}
+          </div>
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function setIF(f){S._initFilter=f;render();}
+window.setIF=setIF;
+
+function showAddInit(prefillStreamId=""){
+  openModal("New Initiative",`
+    <div class="callout callout-tip" style="margin-bottom:12px">Every initiative needs a named lead, a measurable benefit target, and at least one KPI. You can add these after creation.</div>
+    <div class="frow"><label class="flabel">Initiative name — short, specific, action-oriented</label><input class="finp" id="m-iname" placeholder="e.g. Production Planning Discipline"></div>
+    <div class="frow"><label class="flabel">Focus Area (Value Stream)</label>
+      <select class="fsel" id="m-istream">
+        ${S.streams.length===0?`<option value="">No streams yet — set up a stream first</option>`:""}
+        ${S.streams.map(s=>`<option value="${s.id}"${s.id===prefillStreamId?" selected":""}>${esc(s.name)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="fgrid2">
+      <div class="frow"><label class="flabel">Initiative Lead (named person)</label><input class="finp" id="m-ilead" placeholder="e.g. Thabo Mokoena"></div>
+      <div class="frow"><label class="flabel">Weekly hours required</label><input class="finp" type="number" id="m-ihours" placeholder="e.g. 12" min="0"></div>
+      <div class="frow"><label class="flabel">Financial benefit target (R)</label><input class="finp" type="number" id="m-ibenefit" placeholder="0 if non-financial" min="0"></div>
+      <div class="frow"><label class="flabel">Priority score (1–5)</label><input class="finp" type="number" id="m-ipriority" placeholder="e.g. 4.2" min="1" max="5" step="0.1"></div>
+      <div class="frow"><label class="flabel">Planned start</label><input class="finp" type="date" id="m-istart"></div>
+      <div class="frow"><label class="flabel">Planned end</label><input class="finp" type="date" id="m-iend"></div>
+    </div>
+    <div class="frow"><label class="flabel">Portfolio Status</label>
+      <select class="fsel" id="m-iportstatus"><option>Active</option><option>Proposed</option><option>On Hold</option></select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addInit()">Create — then add Business Case</button>
+    </div>`);
+}
+window.showAddInit=showAddInit;
+
+function addInit(){
+  const name=document.getElementById("m-iname").value.trim();
+  const lead=document.getElementById("m-ilead").value.trim();
+  if(!name||!lead) return alert("Name and lead are required.");
+  const id=uid();
+  S.initiatives.push({
+    id, name, lead,
+    streamId:document.getElementById("m-istream").value,
+    weeklyHours:parseInt(document.getElementById("m-ihours").value)||0,
+    benefit:parseInt(document.getElementById("m-ibenefit").value)||0,
+    actual:0,
+    priority:parseFloat(document.getElementById("m-ipriority").value)||3.0,
+    plannedStart:document.getElementById("m-istart").value,
+    plannedEnd:document.getElementById("m-iend").value,
+    portfolioStatus:document.getElementById("m-iportstatus").value,
+    rag:"On Track", kpis:[], milestones:[], teamMembers:[],
+    businessCase:{problem:"",baseline:"",actions:"",benefit:"",opBenefit:"",cost:"",payback:"",risks:"",recommendation:""},
+    statusNote:"", lastUpdated:today()
+  });
+  closeModal(); saveData(); go("init-detail",id);
+}
+window.addInit=addInit;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INITIATIVE DETAIL (Tabs: Overview | Business Case | Activities | KPIs | Milestones | Decisions)
+// ══════════════════════════════════════════════════════════════════════════════
+function renderInitDetail(id){
+  const init=S.initiatives.find(i=>i.id===id);
+  if(!init) return `<button class="back-link" onclick="go('initiatives')">← Back</button><div class="empty">Initiative not found.</div>`;
+  const stream=S.streams.find(s=>s.id===init.streamId);
+  const acts=S.activities.filter(a=>a.initId===id);
+  const decs=S.decisions.filter(d=>d.relatedId===id);
+  const done=acts.filter(a=>a.status==="Complete").length;
+  const pct=acts.length?Math.round((done/acts.length)*100):0;
+  const tab=S._initTab||"overview";
+
+  const tabContent = ()=>{
+    if(tab==="overview") return renderInitOverview(init,stream,acts,done,pct,decs);
+    if(tab==="bc")       return renderInitBC(init);
+    if(tab==="activities") return renderInitActivities(init,stream,acts,pct);
+    if(tab==="kpis")     return renderInitKPIs(init);
+    if(tab==="milestones") return renderInitMilestones(init);
+    if(tab==="decs")     return renderInitDecs(init,decs);
+    return "";
+  };
+
+  return `
+  <button class="back-link" onclick="go('initiatives')">← Back to Initiatives</button>
+  <div class="flex-between" style="margin-bottom:14px;gap:12px;flex-wrap:wrap">
+    <div>
+      <div class="flex-row gap-6" style="margin-bottom:4px">
+        <span style="width:7px;height:7px;border-radius:50%;background:${stream?.color||"#64748B"}"></span>
+        <span style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px">${esc(stream?.name||"No stream")}</span>
+      </div>
+      <div class="page-title">${esc(init.name)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">Lead: ${esc(init.lead)} · ${init.weeklyHours||0}h/wk · Priority <span style="font-family:var(--mono);color:var(--accent)">${(init.priority||0).toFixed(1)}</span> · Last updated: ${esc(init.lastUpdated||"—")}</div>
+    </div>
+    <div class="flex-row gap-8">
+      ${ragChip(init.rag)}
+      <button class="btn btn-sm btn-secondary" onclick="showUpdateStatus('${id}')">Update Status</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteInit('${id}')">Delete</button>
+    </div>
+  </div>
+  <div class="tabs">
+    ${[["overview","Overview"],["bc","Business Case"],["activities","Activities ("+acts.length+")"],["kpis","KPIs ("+init.kpis.length+")"],["milestones","Milestones"],["decs","Decisions ("+decs.length+")"]].map(([t,l])=>`<button class="tab${tab===t?" active":""}" onclick="setIT('${t}')">${l}</button>`).join("")}
+  </div>
+  ${tabContent()}`;
+}
+
+function setIT(t){S._initTab=t;render();}
+window.setIT=setIT;
+
+function renderInitOverview(init,stream,acts,done,pct,decs){
+  const openD=decs.filter(d=>d.status!=="Made");
+  return `
+  <div class="metrics">
+    <div class="metric"><div class="metric-val" style="color:#3B7FE8">${acts.length}</div><div class="metric-label">Activities</div><div class="metric-sub">${done} complete</div></div>
+    <div class="metric"><div class="metric-val" style="color:${stream?.color||"#3B7FE8"}">${pct}%</div><div class="metric-label">Progress</div></div>
+    ${init.benefit>0?`<div class="metric"><div class="metric-val" style="color:#22C55E">${fmt(init.benefit)}</div><div class="metric-label">Benefit Target</div><div class="metric-sub">${fmt(init.actual||0)} realised</div></div>`:""}
+    <div class="metric"><div class="metric-val" style="color:#F59E0B">${openD.length}</div><div class="metric-label">Open Decisions</div></div>
+  </div>
+  ${init.statusNote?`<div class="callout callout-info" style="margin-bottom:12px"><strong>Latest status note:</strong> ${esc(init.statusNote)}</div>`:""}
+  <div class="grid2" style="gap:12px">
+    <div class="card">
+      <span class="slabel">Key Details</span>
+      ${[["Portfolio Status",init.portfolioStatus],["Planned Start",init.plannedStart||"—"],["Planned End",init.plannedEnd||"—"],["Weekly Hours",`${init.weeklyHours||0}h`],["Financial Target",init.benefit>0?fmt(init.benefit):"Not financial"]].map(([l,v])=>`<div class="flex-between" style="padding:6px 0;border-bottom:1px solid var(--bg3)"><span style="font-size:11px;color:var(--muted)">${l}</span><span style="font-size:11px;font-weight:600;color:var(--text)">${v}</span></div>`).join("")}
+    </div>
+    <div class="card">
+      <span class="slabel">Quick Actions</span>
+      <div class="flex-col" style="gap:6px">
+        <button class="btn btn-secondary" style="justify-content:flex-start" onclick="setIT('bc')">📋 ${init.businessCase?.problem?"View Business Case":"Complete Business Case"}</button>
+        <button class="btn btn-secondary" style="justify-content:flex-start" onclick="setIT('activities');showAddActivity('${init.id}')">+ Add Activity</button>
+        <button class="btn btn-secondary" style="justify-content:flex-start" onclick="setIT('kpis');showAddKPI('${init.id}')">+ Add KPI</button>
+        <button class="btn btn-secondary" style="justify-content:flex-start" onclick="setIT('milestones');showAddMilestone('${init.id}')">+ Add Milestone</button>
+        <button class="btn btn-secondary" style="justify-content:flex-start" onclick="showAddDecisionFor('${init.id}')">+ Log Decision</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderInitBC(init){
+  const bc=init.businessCase||{};
+  return `
+  <div class="callout callout-tip">The business case is the filter before an initiative enters the portfolio. If you cannot fill in the baseline and expected benefit, the initiative is not ready.</div>
+  <div class="card">
+    <span class="slabel">Business Case (Lite) — max 2 pages</span>
+    <div class="frow"><label class="flabel">The Problem — what is broken? (2 sentences max)</label>
+      <textarea class="ftxt" id="bc-problem" rows="2" placeholder="e.g. We are missing tender margins on 60% of projects. The average shortfall is 77% below tender.">${esc(bc.problem||"")}</textarea></div>
+    <div class="frow"><label class="flabel">Where we are now — the baseline (use numbers)</label>
+      <textarea class="ftxt" id="bc-baseline" rows="2" placeholder="e.g. Current margin variance: 77% miss rate. WIP: R290m. Forecast accuracy: 8.8–45% shortfall.">${esc(bc.baseline||"")}</textarea></div>
+    <div class="frow"><label class="flabel">What we are going to do — 3 to 5 specific changes</label>
+      <textarea class="ftxt" id="bc-actions" rows="3" placeholder="e.g. 1. Introduce weekly 2hr production planning meetings on all projects above R100m...">${esc(bc.actions||"")}</textarea></div>
+    <div class="fgrid2">
+      <div class="frow"><label class="flabel">Expected financial benefit (R and how you calculated it)</label>
+        <textarea class="ftxt" id="bc-benefit" rows="2" placeholder="e.g. If margin miss reduces 10% on R500m revenue = R5m/yr. Confidence: Medium">${esc(bc.benefit||"")}</textarea></div>
+      <div class="frow"><label class="flabel">Expected operational benefit (speed, risk, client experience)</label>
+        <textarea class="ftxt" id="bc-opbenefit" rows="2" placeholder="e.g. Reduced escalations to CEO. Faster certification. Less rework.">${esc(bc.opBenefit||"")}</textarea></div>
+      <div class="frow"><label class="flabel">What it will cost to deliver (hours + any direct spend)</label>
+        <input class="finp" id="bc-cost" placeholder="e.g. 120hrs internal time + R40k consultant" value="${esc(bc.cost||"")}"></div>
+      <div class="frow"><label class="flabel">Simple payback logic (benefit ÷ cost)</label>
+        <input class="finp" id="bc-payback" placeholder="e.g. R5m/yr benefit vs R200k cost = payback in 3 weeks" value="${esc(bc.payback||"")}"></div>
+    </div>
+    <div class="frow"><label class="flabel">Top 3 risks (one line each with probability H/M/L)</label>
+      <textarea class="ftxt" id="bc-risks" rows="2" placeholder="e.g. 1. Director engagement — Medium. 2. Data availability — High...">${esc(bc.risks||"")}</textarea></div>
+    <div class="frow"><label class="flabel">Decision required — Approve / Do not proceed / Defer</label>
+      <select class="fsel" id="bc-rec">
+        ${["Approve","Do Not Proceed","Defer","Pending Review"].map(o=>`<option${bc.recommendation===o?" selected":""}>${o}</option>`).join("")}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveBC('${init.id}')">Save Business Case</button>
+      <button class="btn btn-ghost" onclick="setIT('overview')">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function saveBC(id){
+  const init=S.initiatives.find(i=>i.id===id);
+  if(!init) return;
+  init.businessCase={
+    problem:document.getElementById("bc-problem").value.trim(),
+    baseline:document.getElementById("bc-baseline").value.trim(),
+    actions:document.getElementById("bc-actions").value.trim(),
+    benefit:document.getElementById("bc-benefit").value.trim(),
+    opBenefit:document.getElementById("bc-opbenefit").value.trim(),
+    cost:document.getElementById("bc-cost").value.trim(),
+    payback:document.getElementById("bc-payback").value.trim(),
+    risks:document.getElementById("bc-risks").value.trim(),
+    recommendation:document.getElementById("bc-rec").value,
+  };
+  saveData(); setIT("overview");
+}
+window.saveBC=saveBC;
+
+function renderInitActivities(init,stream,acts,pct){
+  return `
+  <div class="card">
+    <div class="flex-between mb-12">
+      <span class="slabel" style="margin:0">Activities (${acts.length})</span>
+      <div class="flex-row gap-8">
+        <span style="font-size:10px;color:var(--muted);font-family:var(--mono)">${pct}% complete</span>
+        <button class="btn btn-sm btn-secondary" onclick="showAddActivity('${init.id}')">+ Add</button>
+      </div>
+    </div>
+    ${bar(pct,stream?.color||"#3B7FE8",3)}
+    <div style="margin-top:12px">
+      ${acts.length===0?`<div class="empty">No activities yet. An activity is a specific task within this initiative — 5 max. If you have more, split the initiative.</div>`:""}
+      ${acts.map(a=>{
+        const sc=STATUS_COLOR[a.status]||STATUS_COLOR["Not Started"];
+        return `<div class="flex-row" style="padding:9px 0;border-bottom:1px solid var(--bg3);align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:${sc.d};display:flex;align-items:center;justify-content:center;font-size:10px;color:${sc.c};flex-shrink:0;font-weight:700;margin-top:1px">
+            ${a.status==="Complete"?"✓":a.status==="Blocked"?"!":"·"}
+          </div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(a.name)}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">Lead: ${esc(a.lead)} · Due: ${esc(a.due)||"no date"}</div>
+            ${a.tasks&&a.tasks.length>0?`<div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap">${a.tasks.map(t=>`<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${t.done?"var(--greenD)":"var(--bg3)"};color:${t.done?"var(--green)":"var(--muted)"}${t.done?"":""};text-decoration:${t.done?"line-through":"none"}">${esc(t.name)}</span>`).join("")}</div>`:""}
+            ${a.blockReason?`<div style="font-size:10px;color:#EF4444;margin-top:3px">⚠ ${esc(a.blockReason)}</div>`:""}
+            ${a.measure?`<div style="font-size:10px;color:var(--dim);margin-top:2px">Success: ${esc(a.measure)}</div>`:""}
+          </div>
+          <div class="flex-row gap-6">
+            ${chip(a.status)}
+            ${a.status!=="Complete"?`<button class="btn btn-sm btn-green" onclick="markActDone('${a.id}')">✓</button>`:""}
+            <button class="btn btn-sm btn-danger" onclick="delActivity('${a.id}','${init.id}')">×</button>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>`;
+}
+
+function renderInitKPIs(init){
+  return `
+  <div class="card">
+    <div class="flex-between mb-12">
+      <span class="slabel" style="margin:0">KPIs — agreed in charter, locked once set</span>
+      <button class="btn btn-sm btn-secondary" onclick="showAddKPI('${init.id}')">+ Add KPI</button>
+    </div>
+    <div class="callout callout-tip" style="margin-bottom:12px">KPIs belong at the initiative level, not the activity level. An activity supports a KPI — it doesn't own it.</div>
+    ${init.kpis.length===0?`<div class="empty">No KPIs set yet.</div>`:""}
+    ${init.kpis.map((k,i)=>`
+    <div style="padding:12px 0;border-bottom:1px solid var(--bg3)">
+      <div class="flex-between" style="margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(k.name)}</div>
+        <div class="flex-row gap-8">${chip(k.type,"#3B7FE8","#1E3D6E")}<button class="btn btn-sm btn-secondary" onclick="showUpdateKPI('${init.id}',${i})">Update</button></div>
+      </div>
+      <div style="display:flex;gap:22px;font-size:11px;font-family:var(--mono)">
+        <div><span style="color:var(--dim)">BASELINE </span><span style="color:var(--muted)">${esc(k.baseline)}</span></div>
+        <div><span style="color:var(--dim)">TARGET </span><span style="color:var(--muted)">${esc(k.target)}</span></div>
+        <div><span style="color:var(--dim)">NOW </span><span style="color:var(--accent);font-weight:700">${esc(k.current)}</span></div>
+      </div>
+      ${k.note?`<div style="font-size:10px;color:var(--muted);margin-top:5px">${esc(k.note)}</div>`:""}
+    </div>`).join("")}
+    ${init.kpis.length>0?`
+    <div style="margin-top:14px">
+      <div class="frow"><label class="flabel">Benefit Realised so far (R)</label>
+        <input class="finp" type="number" id="bc-actual" value="${init.actual||0}" placeholder="0">
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="saveActual('${init.id}')">Update Realised Value</button>
+    </div>`:""}
+  </div>`;
+}
+
+function saveActual(id){
+  const init=S.initiatives.find(i=>i.id===id);
+  if(!init) return;
+  init.actual=parseInt(document.getElementById("bc-actual").value)||0;
+  saveData(); render();
+}
+window.saveActual=saveActual;
+
+function renderInitMilestones(init){
+  const ms=init.milestones||[];
+  return `
+  <div class="card">
+    <div class="flex-between mb-12">
+      <span class="slabel" style="margin:0">Milestones</span>
+      <button class="btn btn-sm btn-secondary" onclick="showAddMilestone('${init.id}')">+ Add</button>
+    </div>
+    ${ms.length===0?`<div class="empty">No milestones. Add 3–5 specific, dated milestones for this initiative.</div>`:""}
+    ${ms.map((m,i)=>{
+      const ov=isOverdue(m.date)&&m.status!=="Complete";
+      return `<div class="flex-row" style="padding:9px 0;border-bottom:1px solid var(--bg3);gap:10px;align-items:flex-start">
+        <div style="width:22px;height:22px;border-radius:50%;background:${m.status==="Complete"?"var(--greenD)":ov?"var(--redD)":"var(--accentD)"};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;color:${m.status==="Complete"?"var(--green)":ov?"var(--red)":"var(--accent)"};margin-top:2px">${m.status==="Complete"?"✓":i+1}</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(m.name)}</div>
+          <div style="font-size:10px;color:${ov?"#EF4444":"var(--muted)"};margin-top:2px">Due: ${esc(m.date)||"no date"}${ov?" · OVERDUE":""}</div>
+        </div>
+        <div class="flex-row gap-6">
+          ${chip(m.status||"Not Started")}
+          ${m.status!=="Complete"?`<button class="btn btn-sm btn-green" onclick="markMSDone('${init.id}',${i})">✓</button>`:""}
+          <button class="btn btn-sm btn-danger" onclick="delMS('${init.id}',${i})">×</button>
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function renderInitDecs(init,decs){
+  return `
+  <div class="flex-between mb-12">
+    <span class="slabel" style="margin:0">Decisions linked to this initiative</span>
+    <button class="btn btn-sm btn-primary" onclick="showAddDecisionFor('${init.id}')">+ Log Decision</button>
+  </div>
+  ${decs.length===0?`<div class="empty">No decisions logged for this initiative.</div>`:""}
+  <div class="flex-col">
+    ${decs.map(d=>`
+    <div class="card" style="border-left:3px solid ${d.status==="Made"?"#22C55E":d.status==="Overdue"?"#EF4444":"#F59E0B"}">
+      <div class="flex-between" style="gap:10px">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px">${esc(d.description)}</div>
+          <div style="font-size:10px;color:var(--muted)">From: ${esc(d.neededFrom)} · Due: ${esc(d.due)} · Level: ${esc(d.level)}</div>
+          ${d.consequence&&!d.decision?`<div style="margin-top:6px;font-size:11px;color:#EF4444;background:var(--redD);padding:4px 8px;border-radius:4px">If not made: ${esc(d.consequence)}</div>`:""}
+          ${d.decision?`<div style="margin-top:6px;font-size:11px;color:#22C55E;background:var(--greenD);padding:4px 8px;border-radius:4px">✓ ${esc(d.decision)}</div>`:""}
+        </div>
+        ${chip(d.status)}
+      </div>
+      ${d.status!=="Made"?`<div style="margin-top:10px"><button class="btn btn-sm btn-secondary" onclick="showRecordDecision('${d.id}')">Record Decision</button></div>`:""}
+    </div>`).join("")}
+  </div>`;
+}
+
+// Activity helpers
+function showAddActivity(initId){
+  openModal("Add Activity",`
+    <div class="callout callout-tip" style="margin-bottom:10px">Max 5 activities per initiative. If you need more, the initiative may be too broad — consider splitting it.</div>
+    <div class="frow"><label class="flabel">What needs to be done?</label><input class="finp" id="m-aname" placeholder="Short, specific, action-oriented task"></div>
+    <div class="fgrid2">
+      <div class="frow"><label class="flabel">Activity Lead</label><input class="finp" id="m-alead" placeholder="Named person"></div>
+      <div class="frow"><label class="flabel">Due Date</label><input class="finp" type="date" id="m-adue"></div>
+    </div>
+    <div class="frow"><label class="flabel">What does success look like? (use a number or a yes/no test)</label>
+      <input class="finp" id="m-ameasure" placeholder="e.g. All 8 projects have running weekly planning meetings"></div>
+    <div class="frow"><label class="flabel">Core tasks within this activity (comma-separated)</label>
+      <input class="finp" id="m-atasks" placeholder="e.g. Identify framework, Test approach, Shortlist, Sign-off"></div>
+    <div class="frow"><label class="flabel">Status</label>
+      <select class="fsel" id="m-astatus" onchange="document.getElementById('m-block-row').style.display=this.value==='Blocked'?'block':'none'">
+        ${["Not Started","In Progress","Blocked","Complete"].map(o=>`<option>${o}</option>`).join("")}
+      </select>
+    </div>
+    <div id="m-block-row" style="display:none" class="frow"><label class="flabel">Why is it blocked?</label><input class="finp" id="m-ablockReason" placeholder="Be specific — who or what is blocking it"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addActivity('${initId}')">Add Activity</button>
+    </div>`);
+}
+window.showAddActivity=showAddActivity;
+
+function addActivity(initId){
+  const name=document.getElementById("m-aname").value.trim();
+  const lead=document.getElementById("m-alead").value.trim();
+  if(!name) return alert("Activity name required.");
+  const tasksRaw=document.getElementById("m-atasks").value.trim();
+  const tasks=tasksRaw?tasksRaw.split(",").map(t=>({name:t.trim(),done:false})).filter(t=>t.name):[];
+  S.activities.push({
+    id:uid(),initId,name,lead,
+    due:document.getElementById("m-adue").value,
+    measure:document.getElementById("m-ameasure").value.trim(),
+    status:document.getElementById("m-astatus").value,
+    blockReason:document.getElementById("m-ablockReason")?.value.trim()||"",
+    tasks
+  });
+  closeModal(); saveData(); render();
+}
+window.addActivity=addActivity;
+
+function markActDone(id){
+  const a=S.activities.find(a=>a.id===id);
+  if(a){ a.status="Complete"; a.tasks&&a.tasks.forEach(t=>t.done=true); }
+  saveData(); render();
+}
+window.markActDone=markActDone;
+
+function delActivity(id,initId){
+  S.activities=S.activities.filter(a=>a.id!==id);
+  S.param=initId; saveData(); render();
+}
+window.delActivity=delActivity;
+
+// Milestone helpers
+function showAddMilestone(initId){
+  openModal("Add Milestone",`
+    <div class="frow"><label class="flabel">Milestone name — specific and measurable</label><input class="finp" id="m-msname" placeholder="e.g. Template approved by ops director"></div>
+    <div class="frow"><label class="flabel">Target date</label><input class="finp" type="date" id="m-msdate"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addMilestone('${initId}')">Add</button>
+    </div>`);
+}
+window.showAddMilestone=showAddMilestone;
+
+function addMilestone(initId){
+  const init=S.initiatives.find(i=>i.id===initId);
+  if(!init) return;
+  const name=document.getElementById("m-msname").value.trim();
+  if(!name) return;
+  if(!init.milestones) init.milestones=[];
+  init.milestones.push({name,date:document.getElementById("m-msdate").value,status:"Not Started"});
+  closeModal(); saveData(); render();
+}
+window.addMilestone=addMilestone;
+
+function markMSDone(initId,idx){
+  const init=S.initiatives.find(i=>i.id===initId);
+  if(init&&init.milestones[idx]) init.milestones[idx].status="Complete";
+  saveData(); render();
+}
+window.markMSDone=markMSDone;
+
+function delMS(initId,idx){
+  const init=S.initiatives.find(i=>i.id===initId);
+  if(init&&init.milestones) init.milestones.splice(idx,1);
+  saveData(); render();
+}
+window.delMS=delMS;
+
+// KPI helpers
+function showAddKPI(initId){
+  openModal("Add KPI",`
+    <div class="callout callout-tip" style="margin-bottom:10px">KPIs belong at the initiative level. Once set, the baseline is locked. Update 'current value' each week.</div>
+    <div class="frow"><label class="flabel">KPI Name</label><input class="finp" id="m-kname" placeholder="e.g. Project margin variance"></div>
+    <div class="frow"><label class="flabel">Type</label>
+      <select class="fsel" id="m-ktype"><option>Financial</option><option>Operational</option><option>Commercial</option><option>Governance</option></select>
+    </div>
+    <div class="fgrid3">
+      <div class="frow"><label class="flabel">Baseline (lock this)</label><input class="finp" id="m-kbase" placeholder="e.g. 77% miss rate"></div>
+      <div class="frow"><label class="flabel">Target</label><input class="finp" id="m-ktarget" placeholder="e.g. Reduce by 20%"></div>
+      <div class="frow"><label class="flabel">Current value</label><input class="finp" id="m-kcurrent" placeholder="e.g. 74% miss rate"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addKPI('${initId}')">Add KPI</button>
+    </div>`);
+}
+window.showAddKPI=showAddKPI;
+
+function addKPI(initId){
+  const init=S.initiatives.find(i=>i.id===initId);
+  if(!init) return;
+  const name=document.getElementById("m-kname").value.trim();
+  if(!name) return;
+  init.kpis.push({name,type:document.getElementById("m-ktype").value,baseline:document.getElementById("m-kbase").value.trim(),target:document.getElementById("m-ktarget").value.trim(),current:document.getElementById("m-kcurrent").value.trim()});
+  closeModal(); saveData(); render();
+}
+window.addKPI=addKPI;
+
+function showUpdateKPI(initId,idx){
+  const init=S.initiatives.find(i=>i.id===initId);
+  if(!init) return;
+  const k=init.kpis[idx];
+  openModal("Update KPI — "+k.name,`
+    <div style="margin-bottom:12px;font-size:12px;color:var(--muted)">Baseline (locked): <strong style="color:var(--text)">${esc(k.baseline)}</strong> → Target: <strong style="color:var(--text)">${esc(k.target)}</strong></div>
+    <div class="frow"><label class="flabel">Current Value</label><input class="finp" id="m-kcurr2" value="${esc(k.current)}" placeholder="e.g. 70% miss rate"></div>
+    <div class="frow"><label class="flabel">Note (optional)</label><input class="finp" id="m-knote" value="${esc(k.note||"")}" placeholder="Any context on this reading"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="updateKPI('${initId}',${idx})">Update</button>
+    </div>`);
+}
+window.showUpdateKPI=showUpdateKPI;
+
+function updateKPI(initId,idx){
+  const init=S.initiatives.find(i=>i.id===initId);
+  if(!init) return;
+  init.kpis[idx].current=document.getElementById("m-kcurr2").value.trim();
+  init.kpis[idx].note=document.getElementById("m-knote").value.trim();
+  closeModal(); saveData(); render();
+}
+window.updateKPI=updateKPI;
+
+function showUpdateStatus(id){
+  const init=S.initiatives.find(i=>i.id===id);
+  openModal("Update Status",`
+    <div class="frow"><label class="flabel">New RAG Status</label>
+      <select class="fsel" id="m-rag">${["On Track","At Risk","Behind Schedule","On Hold"].map(o=>`<option${init.rag===o?" selected":""}>${o}</option>`).join("")}</select>
+    </div>
+    <div class="frow"><label class="flabel">Status note — one sentence: what's on track, at risk, what's needed</label>
+      <textarea class="ftxt" id="m-note" rows="2" placeholder="e.g. Template blocked by ops director — escalating this week.">${esc(init.statusNote||"")}</textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveStatus('${id}')">Save</button>
+    </div>`);
+}
+window.showUpdateStatus=showUpdateStatus;
+
+function saveStatus(id){
+  const init=S.initiatives.find(i=>i.id===id);
+  if(init){ init.rag=document.getElementById("m-rag").value; init.statusNote=document.getElementById("m-note").value.trim(); init.lastUpdated=today(); }
+  closeModal(); saveData(); render();
+}
+window.saveStatus=saveStatus;
+
+function deleteInit(id){
+  if(!confirm("Delete this initiative? All activities will also be removed.")) return;
+  S.initiatives=S.initiatives.filter(i=>i.id!==id);
+  S.activities=S.activities.filter(a=>a.initId!==id);
+  saveData(); go("initiatives");
+}
+window.deleteInit=deleteInit;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ALL ACTIVITIES VIEW
+// ══════════════════════════════════════════════════════════════════════════════
+function renderAllActivities(){
+  const af=S._actFilter||"All";
+  const allActs=S.activities.map(a=>{
+    const init=S.initiatives.find(i=>i.id===a.initId);
+    const stream=init?S.streams.find(s=>s.id===init.streamId):null;
+    return {...a,initName:init?.name||"—",streamName:stream?.name||"—",streamColor:stream?.color||"#64748B"};
+  });
+  const filtered=af==="All"?allActs:allActs.filter(a=>a.status===af);
+  return `
+  <div class="flex-between mb-12">
+    <span class="slabel" style="margin:0">All Activities</span>
+  </div>
+  <div class="filter-pills">
+    ${["All","Not Started","In Progress","Blocked","Complete"].map(f=>`<button class="pill${af===f?" active":""}" onclick="setAF('${f}')">${f}</button>`).join("")}
+  </div>
+  ${filtered.length===0?`<div class="empty">No activities${af!=="All"?" with this status":""}.</div>`:`
+  <table>
+    <thead><tr><th>Activity</th><th>Initiative</th><th>Stream</th><th>Lead</th><th>Due</th><th>Status</th><th>Success Measure</th></tr></thead>
+    <tbody>
+      ${filtered.map(a=>{
+        const ov=isOverdue(a.due)&&a.status!=="Complete";
+        return `<tr class="clickable" onclick="go('init-detail',${a.initId?`'${a.initId}'`:'null'})">
+          <td style="font-weight:600;color:var(--text)">${esc(a.name)}</td>
+          <td style="color:var(--muted)">${esc(a.initName)}</td>
+          <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:5px;height:5px;border-radius:50%;background:${a.streamColor}"></span><span style="color:var(--muted)">${esc(a.streamName)}</span></span></td>
+          <td style="color:var(--muted)">${esc(a.lead)}</td>
+          <td style="color:${ov?"#EF4444":"var(--muted)"};font-family:var(--mono);font-size:11px">${esc(a.due)||"—"}${ov?" ⚠":""}</td>
+          <td>${chip(a.status)}</td>
+          <td style="font-size:10px;color:var(--dim)">${esc(a.measure)}</td>
+        </tr>`;
+      }).join("")}
+    </tbody>
+  </table>`}`;
+}
+function setAF(f){S._actFilter=f;render();}
+window.setAF=setAF;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MEETINGS
+// ══════════════════════════════════════════════════════════════════════════════
+function renderMeetings(){
+  const tab=S._meetTab||"steerco";
+  const gb=S.programme.governanceBody||"SteerCo";
+  return `
+  <div class="flex-between mb-12">
+    <span class="slabel" style="margin:0">Meetings & Governance</span>
+    <button class="btn btn-sm btn-primary" onclick="showLogMeeting()">+ Log Meeting</button>
+  </div>
+  <div class="tabs">
+    ${[[`steerco`,`${gb} Agenda`],["stream","Workstream Review Agenda"],["templates","All Templates"],["log","Meeting Log"]].map(([t,l])=>`<button class="tab${tab===t?" active":""}" onclick="setMT('${t}')">${l}</button>`).join("")}
+  </div>
+  ${tab==="steerco"?renderSteerCoAgenda(gb):""}
+  ${tab==="stream"?renderWorkstreamAgenda():""}
+  ${tab==="templates"?renderMeetingTemplates():""}
+  ${tab==="log"?renderMeetingLog():""}`;
+}
+function setMT(t){S._meetTab=t;render();}
+window.setMT=setMT;
+
+function renderSteerCoAgenda(gb){
+  const active=S.initiatives.filter(i=>i.portfolioStatus==="Active");
+  const openDec=S.decisions.filter(d=>d.status==="Open"||d.status==="Overdue");
+  const overdueAct=S.actions.filter(a=>a.status==="Overdue"||isOverdue(a.due)&&a.status!=="Done");
+  return `
+  <div class="callout callout-info" style="margin-bottom:14px">${gb} agenda auto-populates from live data. Print or share as a pre-read 48hrs before the meeting.</div>
+  <div class="card" style="margin-bottom:12px">
+    <div class="flex-between mb-12">
+      <div><div style="font-size:14px;font-weight:800;font-family:var(--display);color:var(--text)">${esc(gb)} Meeting — Pre-Read</div>
+      <div style="font-size:10px;color:var(--muted)">Distribute 48 hours before. Maximum 2 pages. No surprises in the room.</div></div>
+      <button class="btn btn-sm btn-ghost" onclick="window.print()">🖨 Print</button>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Portfolio Summary</div>
+    <div class="metrics">
+      ${["On Track","At Risk","Behind Schedule","On Hold"].map(s=>{const c=RAG_COLOR[s];return `<div class="metric" style="min-width:0;padding:10px 12px"><div class="metric-val" style="color:${c.c};font-size:18px">${active.filter(i=>i.rag===s).length}</div><div class="metric-sub">${s}</div></div>`;}).join("")}
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Standard Agenda (80 min)</div>
+    ${[
+      ["5 min","Quorum + previous actions","EEO Lead","Review action log. Green = done. Amber = new date. Red = escalate now."],
+      ["15 min","Portfolio Dashboard Review","EEO Lead","Overall health, RAG summary, financial impact, milestone adherence rate."],
+      ["10 min × n","Workstream Updates","Each Workstream Lead","Progress, milestones achieved, decisions required from "+gb+"."],
+      ["15 min","Escalation Items","EEO Lead","Unresolved issues requiring "+gb+" decision — pre-distributed in pre-read. No surprises."],
+      ["10 min","Portfolio Pipeline","EEO Lead","Next wave of initiatives for awareness only — not decision."],
+      ["5 min","Actions & Close","EEO Lead","Confirm decisions made, record actions (owner + date), confirm next meeting."],
+    ].map(([t,topic,owner,guidance],i)=>`
+    <div class="agenda-item">
+      <div class="agenda-num">${i+1}</div>
+      <div style="flex:1">
+        <div class="flex-row gap-8" style="margin-bottom:3px">
+          <div style="font-size:12px;font-weight:700;color:var(--text)">${topic}</div>
+          <span style="font-size:9px;font-family:var(--mono);color:var(--amber);background:var(--amberD);padding:1px 6px;border-radius:3px">${t}</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted)"><strong style="color:var(--dim)">Owner: </strong>${owner}</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:2px">${guidance}</div>
+      </div>
+    </div>`).join("")}
+    <div class="divider"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Decisions Required This Meeting (${openDec.length})</div>
+    ${openDec.length===0?`<div style="font-size:12px;color:var(--muted)">No open decisions.</div>`:""}
+    ${openDec.map(d=>`<div style="border-left:2px solid #F59E0B;padding-left:8px;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(d.description)}</div>
+      <div style="font-size:10px;color:var(--muted)">→ ${esc(d.neededFrom)} · ${esc(d.due)}</div>
+      ${d.consequence?`<div style="font-size:10px;color:#EF4444">If not made: ${esc(d.consequence)}</div>`:""}
+    </div>`).join("")}
+    <div class="divider"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Overdue Actions (${overdueAct.length})</div>
+    ${overdueAct.length===0?`<div style="font-size:12px;color:var(--muted)">None overdue.</div>`:""}
+    ${overdueAct.map(a=>`<div style="border-left:2px solid #EF4444;padding-left:8px;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(a.desc)}</div>
+      <div style="font-size:10px;color:var(--muted)">${esc(a.owner)} · ${esc(a.due)}</div>
+    </div>`).join("")}
+  </div>`;
+}
+
+function renderWorkstreamAgenda(){
+  return `
+  <div class="callout callout-tip" style="margin-bottom:14px">Same day, same time, every week. If someone can't attend, they send a deputy — not an email. Green statuses take 2 minutes. The meeting is for Amber and Red.</div>
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;font-family:var(--display);color:var(--text);margin-bottom:4px">Weekly Initiative Review — Agenda</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:14px">60 minutes. No extensions. If more time is needed, schedule a separate session — do not run over.</div>
+    ${[
+      ["5 min","Previous actions review","EEO Lead","Review action log. Green = done. Amber = reason + new date. Red = escalate now."],
+      ["10 min","Milestone update","Workstream Lead","What was planned? What was achieved? RAG status — be honest."],
+      ["15 min","Issues and blockers","Workstream Lead","What is preventing delivery? What has been tried? What decision is needed?"],
+      ["5 min","Risk register review","Workstream Lead","New risks? Any change in probability or impact?"],
+      ["10 min","Next week plan","Workstream Lead","Specific milestones and activities for next 7 days. Named owner for each item."],
+      ["10 min","Decisions and escalations","EEO Lead","What needs to be decided today? What must go to "+( S.programme.governanceBody||"SteerCo")+"?"],
+      ["5 min","Actions close","EEO Lead","Record all actions: owner, description, deadline. Distribute within 2 hours."],
+    ].map(([t,topic,owner,guidance],i)=>`
+    <div class="agenda-item">
+      <div class="agenda-num">${i+1}</div>
+      <div style="flex:1">
+        <div class="flex-row gap-8 mb-8"><div style="font-size:12px;font-weight:700;color:var(--text)">${topic}</div><span style="font-size:9px;font-family:var(--mono);color:var(--accent);background:var(--accentD);padding:1px 6px;border-radius:3px">${t}</span></div>
+        <div style="font-size:10px;color:var(--muted)"><strong style="color:var(--dim)">Owner: </strong>${owner}</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:2px">${guidance}</div>
+      </div>
+    </div>`).join("")}
+  </div>`;
+}
+
+function renderMeetingTemplates(){
+  return `
+  <div class="grid2" style="gap:12px">
+    ${[
+      ["SteerCo Pre-Read Template","Auto-generates from live data. Distribute 48hrs before. Max 2 pages. No surprises in the room.","Go to "+( S.programme.governanceBody||"SteerCo")+" Agenda tab →","steerco"],
+      ["Workstream Review Template","60 min fixed. Same day/time weekly. Green statuses take 2 min. Meeting is for Amber and Red.","Go to Workstream Review tab →","stream"],
+      ["Initiative Charter","Defines scope, owner, benefit, milestones, KPIs. One page. 30–45 min to complete.","Create or open an initiative →","initiatives"],
+      ["Business Case (Lite)","Two pages max. If it takes more than 2hrs to write, the initiative isn't ready. Quantify the problem before committing people.","Open any initiative → Business Case tab →","initiatives"],
+      ["Escalation Protocol","Level 1: Workstream (5 days). Level 2: EEO Lead (24hrs). Level 3: "+( S.programme.governanceBody||"SteerCo")+" agenda. Level 4: CEO (24hrs).","Go to Decisions →","decisions"],
+      ["RAG Definitions","On Track = green, no action. At Risk = amber, mitigation plan due in 5 days. Behind Schedule = red, immediate escalation. On Hold = grey, paused by decision.","See Reporting →","reporting"],
+    ].map(([title,desc,action,view])=>`
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">${title}</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.65;margin-bottom:12px">${desc}</div>
+      <button class="btn btn-sm btn-secondary" onclick="go('${view}')">${action}</button>
+    </div>`).join("")}
+  </div>`;
+}
+
+function renderMeetingLog(){
+  return `
+  <div class="flex-between mb-12">
+    <span class="slabel" style="margin:0">Meeting Log</span>
+    <button class="btn btn-sm btn-primary" onclick="showLogMeeting()">+ Log Meeting</button>
+  </div>
+  ${S.meetings.length===0?`<div class="empty">No meetings logged yet. Use the + Log Meeting button to record meetings that have taken place.</div>`:`
+  <div class="flex-col">
+    ${S.meetings.map(m=>`
+    <div class="card">
+      <div class="flex-between" style="margin-bottom:8px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(m.type)} — ${esc(m.date)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Attendees: ${esc(m.attendees)} · Chaired by: ${esc(m.chair)}</div>
+        </div>
+        ${chip(m.status||"Complete")}
+      </div>
+      ${m.notes?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${esc(m.notes)}</div>`:""}
+      ${m.actions?`<div style="font-size:11px;color:var(--dim)">Actions: ${esc(m.actions)}</div>`:""}
+    </div>`).join("")}
+  </div>`}`;
+}
+
+function showLogMeeting(){
+  const gb=S.programme.governanceBody||"SteerCo";
+  openModal("Log Meeting",`
+    <div class="frow"><label class="flabel">Meeting Type</label>
+      <select class="fsel" id="m-mtype"><option>${gb}</option><option>Workstream Review</option><option>Initiative Review</option><option>Ad-hoc</option></select>
+    </div>
+    <div class="fgrid2">
+      <div class="frow"><label class="flabel">Date</label><input class="finp" type="date" id="m-mdate" value="${today()}"></div>
+      <div class="frow"><label class="flabel">Chaired by</label><input class="finp" id="m-mchair" placeholder="Name"></div>
+    </div>
+    <div class="frow"><label class="flabel">Attendees</label><input class="finp" id="m-mattend" placeholder="Comma-separated names"></div>
+    <div class="frow"><label class="flabel">Key notes (decisions made, issues raised)</label><textarea class="ftxt" id="m-mnotes" rows="3" placeholder="Brief notes — decisions and actions are the focus"></textarea></div>
+    <div class="frow"><label class="flabel">Actions arising (owner · deadline · what)</label><textarea class="ftxt" id="m-mactions" rows="2" placeholder="e.g. Thabo to distribute template by 20 March"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="logMeeting()">Save Meeting Record</button>
+    </div>`);
+}
+window.showLogMeeting=showLogMeeting;
+
+function logMeeting(){
+  S.meetings.unshift({
+    id:uid(),
+    type:document.getElementById("m-mtype").value,
+    date:document.getElementById("m-mdate").value,
+    chair:document.getElementById("m-mchair").value.trim(),
+    attendees:document.getElementById("m-mattend").value.trim(),
+    notes:document.getElementById("m-mnotes").value.trim(),
+    actions:document.getElementById("m-mactions").value.trim(),
+    status:"Complete"
+  });
+  closeModal(); saveData(); render();
+}
+window.logMeeting=logMeeting;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DECISIONS
+// ══════════════════════════════════════════════════════════════════════════════
+function renderDecisions(){
+  const tab=S._decTab||"Overdue";
+  const groups={Overdue:S.decisions.filter(d=>d.status==="Overdue"),Open:S.decisions.filter(d=>d.status==="Open"),Made:S.decisions.filter(d=>d.status==="Made")};
+  const list=groups[tab]||[];
+  return `
+  <div class="flex-between mb-12">
+    <span class="slabel" style="margin:0">Decisions & Escalation Log</span>
+    <button class="btn btn-sm btn-primary" onclick="showAddDecision()">+ Log Decision</button>
+  </div>
+  <div class="tabs">
+    ${[["Overdue","Overdue ("+groups.Overdue.length+")"],["Open","Open ("+groups.Open.length+")"],["Made","Made ("+groups.Made.length+")"]].map(([t,l])=>`<button class="tab${tab===t?" active":""}" onclick="setDT('${t}')">${l}</button>`).join("")}
+  </div>
+  ${list.length===0?`<div class="empty">No ${tab.toLowerCase()} decisions.</div>`:""}
+  <div class="flex-col">
+    ${list.map(d=>{
+      const related=S.initiatives.find(i=>i.id===d.relatedId)||S.streams.find(s=>s.id===d.relatedId);
+      return `<div class="card" style="border-left:3px solid ${d.status==="Made"?"#22C55E":d.status==="Overdue"?"#EF4444":"#F59E0B"};cursor:${d.status!=="Made"?"pointer":"default"}" onclick="${d.status!=="Made"?`showRecordDecision('${d.id}')`:""}" title="${d.status!=="Made"?"Click to record decision":""}">
+        <div class="flex-between" style="gap:12px;flex-wrap:wrap">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px">${esc(d.description)}</div>
+            <div style="display:flex;gap:12px;font-size:10px;color:var(--muted);flex-wrap:wrap">
+              <span>From: <strong style="color:var(--text)">${esc(d.neededFrom)}</strong></span>
+              <span>Due: <strong style="color:${d.status==="Overdue"?"#EF4444":"var(--text)"}">${esc(d.due)}</strong></span>
+              ${related?`<span>Re: <span style="color:var(--accent)">${esc(related.name)}</span></span>`:""}
+              <span>Level: ${esc(d.level)}</span>
+            </div>
+            ${d.consequence&&!d.decision?`<div style="margin-top:7px;font-size:11px;color:#EF4444;background:var(--redD);padding:4px 8px;border-radius:4px">If not made: ${esc(d.consequence)}</div>`:""}
+            ${d.decision?`<div style="margin-top:7px;font-size:11px;color:#22C55E;background:var(--greenD);padding:4px 8px;border-radius:4px">✓ ${esc(d.decision)}</div>`:""}
+          </div>
+          ${chip(d.status)}
+        </div>
+        ${d.status!=="Made"?`<div style="margin-top:10px;font-size:10px;color:var(--dim)">↑ Click anywhere to record decision</div>`:""}
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+function setDT(t){S._decTab=t;render();}
+window.setDT=setDT;
+
+function showAddDecision(){
+  openModal("Log Decision Required",`
+    <div class="frow"><label class="flabel">What decision is needed? (specific)</label>
+      <textarea class="ftxt" id="m-ddesc" rows="2" placeholder="e.g. Approve production planning template before training begins"></textarea>
+    </div>
+    <div class="fgrid2">
+      <div class="frow"><label class="flabel">Decision needed from (named person)</label><input class="finp" id="m-dfrom" placeholder="e.g. Clinton Crowie"></div>
+      <div class="frow"><label class="flabel">Due by</label><input class="finp" type="date" id="m-ddue"></div>
+      <div class="frow"><label class="flabel">Level</label>
+        <select class="fsel" id="m-dlevel"><option>Initiative</option><option>Stream</option><option>Programme</option><option>${S.programme.governanceBody||"SteerCo"}</option></select>
+      </div>
+      <div class="frow"><label class="flabel">Related Initiative (optional)</label>
+        <select class="fsel" id="m-drelated"><option value="">None</option>${S.initiatives.map(i=>`<option value="${i.id}">${esc(i.name)}</option>`).join("")}</select>
+      </div>
+    </div>
+    <div class="frow"><label class="flabel">What happens if not made by the due date? (mandatory)</label>
+      <input class="finp" id="m-dconseq" placeholder="e.g. Training cannot start — initiative stays Behind Schedule">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addDecision()">Log Decision</button>
+    </div>`);
+}
+window.showAddDecision=showAddDecision;
+
+function showAddDecisionFor(relatedId){
+  S._pendingRelatedId=relatedId;
+  showAddDecision();
+}
+window.showAddDecisionFor=showAddDecisionFor;
+
+function addDecision(){
+  const desc=document.getElementById("m-ddesc").value.trim();
+  const from=document.getElementById("m-dfrom").value.trim();
+  const conseq=document.getElementById("m-dconseq").value.trim();
+  if(!desc||!from||!conseq) return alert("Description, 'needed from' and consequence are all required.");
+  const relId=S._pendingRelatedId||document.getElementById("m-drelated").value||null;
+  S._pendingRelatedId=null;
+  S.decisions.push({id:uid(),description:desc,neededFrom:from,due:document.getElementById("m-ddue").value,level:document.getElementById("m-dlevel").value,consequence:conseq,status:"Open",decision:null,relatedId:relId});
+  closeModal(); saveData(); renderNav(); render();
+}
+window.addDecision=addDecision;
+
+function showRecordDecision(id){
+  const d=S.decisions.find(d=>d.id===id);
+  if(!d) return;
+  openModal("Record Decision — "+d.description.substring(0,50),`
+    <div style="margin-bottom:12px;font-size:12px;color:var(--muted)">Required from: <strong style="color:var(--text)">${esc(d.neededFrom)}</strong> · Due: ${esc(d.due)}</div>
+    ${d.consequence?`<div class="callout callout-warn" style="margin-bottom:12px">If not made: ${esc(d.consequence)}</div>`:""}
+    <div class="frow"><label class="flabel">What was decided?</label>
+      <textarea class="ftxt" id="m-rdtext" rows="3" placeholder="Record the decision exactly as made — this is a governance record"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="recordDecision('${id}')">Save Decision</button>
+    </div>`);
+}
+window.showRecordDecision=showRecordDecision;
+
+function recordDecision(id){
+  const text=document.getElementById("m-rdtext").value.trim();
+  if(!text) return;
+  const d=S.decisions.find(d=>d.id===id);
+  if(d){d.status="Made";d.decision=text;d.decidedDate=today();}
+  closeModal(); saveData(); renderNav(); render();
+}
+window.recordDecision=recordDecision;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════════════════════════════════════════════
+function renderActions(){
+  const groups={
+    Overdue:S.actions.filter(a=>a.status==="Overdue"||isOverdue(a.due)&&a.status!=="Done"),
+    "In Progress":S.actions.filter(a=>a.status==="In Progress"&&!(isOverdue(a.due))),
+    "Not Started":S.actions.filter(a=>a.status==="Not Started"&&!(isOverdue(a.due))),
+    Done:S.actions.filter(a=>a.status==="Done"),
+  };
+  const gc={Overdue:"#EF4444","In Progress":"#3B7FE8","Not Started":"#64748B",Done:"#22C55E"};
+  return `
+  <div class="flex-between mb-12">
+    <span class="slabel" style="margin:0">Actions Log</span>
+    <button class="btn btn-sm btn-primary" onclick="showAddAction()">+ New Action</button>
+  </div>
+  ${Object.entries(groups).map(([group,acts])=>`
+  <div style="margin-bottom:18px">
+    <div class="flex-row gap-6" style="margin-bottom:8px">
+      <span style="width:5px;height:5px;border-radius:50%;background:${gc[group]}"></span>
+      <span style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)">${group} (${acts.length})</span>
+    </div>
+    ${acts.length===0?`<div style="font-size:11px;color:var(--border);padding-left:12px">None.</div>`:""}
+    <div class="flex-col" style="gap:6px">
+      ${acts.map(a=>{
+        const bc=a.status==="Done"?"#22C55E":isOverdue(a.due)&&a.status!=="Done"?"#EF4444":a.status==="In Progress"?"#3B7FE8":"#64748B";
+        const related=S.initiatives.find(i=>i.id===a.relatedId)||S.streams.find(s=>s.id===a.relatedId);
+        return `<div class="card" style="border-left:3px solid ${bc}">
+          <div class="flex-between" style="gap:10px">
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px">${esc(a.desc)}</div>
+              <div style="font-size:10px;color:var(--muted)">
+                Owner: <strong style="color:var(--text)">${esc(a.owner)}</strong> · Due: <strong style="color:${isOverdue(a.due)&&a.status!=="Done"?"#EF4444":"var(--text)"}">${esc(a.due)||"no date"}</strong>
+                ${related?` · <span style="color:var(--accent)">${esc(related.name)}</span>`:""}
+              </div>
+            </div>
+            <div class="flex-row gap-6">
+              ${chip(a.status)}
+              ${a.status!=="Done"?`<button class="btn btn-sm btn-green" onclick="markActionDone('${a.id}')">✓</button>`:""}
+              <button class="btn btn-sm btn-danger" onclick="deleteAction('${a.id}')">×</button>
+            </div>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>`).join("")}`;
+}
+
+function showAddAction(){
+  openModal("New Action",`
+    <div class="frow"><label class="flabel">What needs to be done? (specific)</label>
+      <textarea class="ftxt" id="m-adesc" rows="2" placeholder="e.g. Distribute planning template to ops director for sign-off by Friday"></textarea>
+    </div>
+    <div class="fgrid2">
+      <div class="frow"><label class="flabel">Owner (named person)</label><input class="finp" id="m-aowner" placeholder="Who is doing this?"></div>
+      <div class="frow"><label class="flabel">Due by</label><input class="finp" type="date" id="m-aactiondue"></div>
+    </div>
+    <div class="frow"><label class="flabel">Status</label>
+      <select class="fsel" id="m-aactionstatus"><option>Not Started</option><option>In Progress</option><option>Overdue</option></select>
+    </div>
+    <div class="frow"><label class="flabel">Related Initiative (optional)</label>
+      <select class="fsel" id="m-arelated"><option value="">None</option>${S.initiatives.map(i=>`<option value="${i.id}">${esc(i.name)}</option>`).join("")}</select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addAction()">Add Action</button>
+    </div>`);
+}
+window.showAddAction=showAddAction;
+
+function addAction(){
+  const desc=document.getElementById("m-adesc").value.trim();
+  const owner=document.getElementById("m-aowner").value.trim();
+  if(!desc||!owner) return alert("Description and owner required.");
+  S.actions.push({id:uid(),desc,owner,due:document.getElementById("m-aactiondue").value,status:document.getElementById("m-aactionstatus").value,relatedId:document.getElementById("m-arelated").value||null});
+  closeModal(); saveData(); renderNav(); render();
+}
+window.addAction=addAction;
+
+function markActionDone(id){
+  const a=S.actions.find(a=>a.id===id);
+  if(a){ a.status="Done"; a.doneDate=today(); }
+  saveData(); renderNav(); render();
+}
+window.markActionDone=markActionDone;
+
+function deleteAction(id){
+  S.actions=S.actions.filter(a=>a.id!==id);
+  saveData(); renderNav(); render();
+}
+window.deleteAction=deleteAction;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RISK REGISTER
+// ══════════════════════════════════════════════════════════════════════════════
+function renderRisks(){
+  const f=S._riskFilter||"All";
+  const filtered=f==="All"?S.risks:S.risks.filter(r=>r.level===f||r.status===f);
+  const high=S.risks.filter(r=>r.level==="High"&&r.status!=="Closed");
+  return `
+  <div class="flex-between mb-12">
+    <span class="slabel" style="margin:0">Risk & Issue Register</span>
+    <button class="btn btn-sm btn-primary" onclick="showAddRisk()">+ Log Risk</button>
+  </div>
+  ${high.length>0?`<div class="callout callout-warn" style="margin-bottom:12px">${high.length} High risk${high.length>1?"s":""} open — escalate to ${S.programme.governanceBody||"SteerCo"} if not resolved.</div>`:""}
+  <div class="filter-pills">
+    ${["All","High","Medium","Low","Closed"].map(f2=>`<button class="pill${f===f2?" active":""}" onclick="setRF('${f2}')">${f2}</button>`).join("")}
+  </div>
+  ${filtered.length===0?`<div class="empty">No risks logged.</div>`:""}
+  <div class="flex-col">
+    ${filtered.map(r=>{
+      const related=S.initiatives.find(i=>i.id===r.relatedId);
+      return `<div class="risk-card risk-${r.level?.toLowerCase()}" style="opacity:${r.status==="Closed"?.5:1}">
+        <div class="flex-between" style="margin-bottom:7px">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(r.title)}</div>
+          <div class="flex-row gap-6">${riskBadge(r.level)}${chip(r.status||"Open")}</div>
+        </div>
+        ${r.description?`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">${esc(r.description)}</div>`:""}
+        ${r.mitigation?`<div style="font-size:11px;color:var(--dim)">Mitigation: ${esc(r.mitigation)}</div>`:""}
+        <div style="display:flex;gap:14px;margin-top:7px;font-size:10px;color:var(--muted)">
+          <span>Owner: <strong style="color:var(--text)">${esc(r.owner)||"—"}</strong></span>
+          ${related?`<span>Re: <span style="color:var(--accent)">${esc(related.name)}</span></span>`:""}
+        </div>
+        ${r.status!=="Closed"?`<div style="margin-top:10px"><button class="btn btn-sm btn-ghost" onclick="closeRisk('${r.id}')">Mark Closed</button></div>`:""}
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+function setRF(f){S._riskFilter=f;render();}
+window.setRF=setRF;
+
+function showAddRisk(){
+  openModal("Log Risk",`
+    <div class="frow"><label class="flabel">Risk Title (plain, specific)</label><input class="finp" id="m-rtitle" placeholder="e.g. CEO disengages after launch"></div>
+    <div class="frow"><label class="flabel">Description</label><textarea class="ftxt" id="m-rdesc" rows="2" placeholder="What could happen? What's the trigger?"></textarea></div>
+    <div class="fgrid2">
+      <div class="frow"><label class="flabel">Probability</label>
+        <select class="fsel" id="m-rlevel"><option>High</option><option>Medium</option><option>Low</option></select>
+      </div>
+      <div class="frow"><label class="flabel">Risk Owner</label><input class="finp" id="m-rown" placeholder="Named person"></div>
+    </div>
+    <div class="frow"><label class="flabel">Mitigation — what we will do if it happens</label>
+      <textarea class="ftxt" id="m-rmit" rows="2" placeholder="e.g. Immediate escalation to Chairman; reframe as authority risk"></textarea>
+    </div>
+    <div class="frow"><label class="flabel">Related Initiative (optional)</label>
+      <select class="fsel" id="m-rrelated"><option value="">None</option>${S.initiatives.map(i=>`<option value="${i.id}">${esc(i.name)}</option>`).join("")}</select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addRisk()">Log Risk</button>
+    </div>`);
+}
+window.showAddRisk=showAddRisk;
+
+function addRisk(){
+  const title=document.getElementById("m-rtitle").value.trim();
+  if(!title) return alert("Risk title required.");
+  S.risks.push({id:uid(),title,description:document.getElementById("m-rdesc").value.trim(),level:document.getElementById("m-rlevel").value,owner:document.getElementById("m-rown").value.trim(),mitigation:document.getElementById("m-rmit").value.trim(),relatedId:document.getElementById("m-rrelated").value||null,status:"Open",dateLogged:today()});
+  closeModal(); saveData(); renderNav(); render();
+}
+window.addRisk=addRisk;
+
+function closeRisk(id){
+  const r=S.risks.find(r=>r.id===id);
+  if(r) r.status="Closed";
+  saveData(); renderNav(); render();
+}
+window.closeRisk=closeRisk;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REPORTING
+// ══════════════════════════════════════════════════════════════════════════════
+function renderReporting(){
+  const tab=S._reportTab||"portfolio";
+  const active=S.initiatives.filter(i=>i.portfolioStatus==="Active");
+  const totalB=active.reduce((s,i)=>s+i.benefit,0);
+  const totalA=active.reduce((s,i)=>s+(i.actual||0),0);
+  return `
+  <span class="slabel">Governance Body — Reporting & Analytics</span>
+  <div class="tabs">
+    ${[["portfolio","Portfolio Overview"],["streams","By Focus Area"],["utilisation","Resource Utilisation"],["financial","Financial Spend"],["kpireport","KPI Summary"]].map(([t,l])=>`<button class="tab${tab===t?" active":""}" onclick="setRT('${t}')">${l}</button>`).join("")}
+  </div>
+  ${tab==="portfolio"?renderReportPortfolio(active,totalB,totalA):""}
+  ${tab==="streams"?renderReportStreams(active):""}
+  ${tab==="utilisation"?renderReportUtilisation(active):""}
+  ${tab==="financial"?renderReportFinancial(active,totalB,totalA):""}
+  ${tab==="kpireport"?renderReportKPI(active):""}`;
+}
+function setRT(t){S._reportTab=t;render();}
+window.setRT=setRT;
+
+function renderReportPortfolio(active,totalB,totalA){
+  const gb=S.programme.governanceBody||"SteerCo";
+  const openDec=S.decisions.filter(d=>d.status!=="Made").length;
+  const madeDec=S.decisions.filter(d=>d.status==="Made").length;
+  const overdueAct=S.actions.filter(a=>a.status==="Overdue"||isOverdue(a.due)&&a.status!=="Done").length;
+  const doneAct=S.actions.filter(a=>a.status==="Done").length;
+  const allActs=S.activities;
+  const actDone=allActs.filter(a=>a.status==="Complete").length;
+  return `
+  <div class="metrics">
+    <div class="metric"><div class="metric-val" style="color:#3B7FE8">${fmt(totalB)}</div><div class="metric-label">Benefit Target</div><div class="metric-sub">across active initiatives</div></div>
+    <div class="metric"><div class="metric-val" style="color:#22C55E">${fmt(totalA)}</div><div class="metric-label">Benefit Realised</div><div class="metric-sub">${totalB>0?Math.round((totalA/totalB)*100):0}% of target</div></div>
+    <div class="metric"><div class="metric-val" style="color:#F59E0B">${openDec}</div><div class="metric-label">Open Decisions</div><div class="metric-sub">${madeDec} made</div></div>
+    <div class="metric"><div class="metric-val" style="color:#EF4444">${overdueAct}</div><div class="metric-label">Overdue Actions</div><div class="metric-sub">${doneAct} done</div></div>
+  </div>
+  <div class="grid2" style="gap:12px">
+    <div class="card">
+      <span class="slabel">Financial & Non-Financial Performance</span>
+      ${active.length===0?`<div class="empty">No active initiatives.</div>`:""}
+      ${active.map(init=>{
+        const pct=init.benefit>0?Math.round(((init.actual||0)/init.benefit)*100):0;
+        const st=S.streams.find(s=>s.id===init.streamId);
+        return `<div style="padding:9px 0;border-bottom:1px solid var(--bg3)">
+          <div class="flex-between" style="margin-bottom:5px">
+            <div style="font-size:12px;font-weight:700;color:var(--text)">${esc(init.name)}</div>
+            ${ragChip(init.rag)}
+          </div>
+          ${init.benefit>0?`<div class="flex-between" style="font-size:10px;color:var(--muted);margin-bottom:3px;font-family:var(--mono)"><span>Benefit</span><span>${fmt(init.actual||0)} / ${fmt(init.benefit)}</span></div>${bar(pct,st?.color||"#3B7FE8")}`:""}
+          ${init.kpis?.[0]?`<div style="font-size:10px;color:var(--dim);margin-top:4px;font-family:var(--mono)">${esc(init.kpis[0].name)}: <span style="color:var(--accent)">${esc(init.kpis[0].current)}</span> → ${esc(init.kpis[0].target)}</div>`:""}
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="card">
+      <span class="slabel">Decisions & Communication</span>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        ${[["Open",S.decisions.filter(d=>d.status==="Open").length,"#F59E0B","var(--amberD)"],["Overdue",S.decisions.filter(d=>d.status==="Overdue").length,"#EF4444","var(--redD)"],["Made",madeDec,"#22C55E","var(--greenD)"]].map(([l,v,c,d])=>`<div style="flex:1;background:${d};border-radius:6px;padding:10px 12px;text-align:center"><div style="font-size:20px;font-weight:800;color:${c};font-family:var(--mono)">${v}</div><div style="font-size:9px;color:${c};font-weight:700;text-transform:uppercase;letter-spacing:1px">${l}</div></div>`).join("")}
+      </div>
+      <span class="slabel">Programme Health</span>
+      ${["On Track","At Risk","Behind Schedule","On Hold"].map(s=>{const c=RAG_COLOR[s];return `<div class="flex-between" style="padding:6px 0;border-bottom:1px solid var(--bg3)"><span style="font-size:12px;color:var(--muted)">${s}</span><span style="font-size:14px;font-weight:700;color:${c.c};font-family:var(--mono)">${active.filter(i=>i.rag===s).length}</span></div>`;}).join("")}
+      <div style="margin-top:12px">
+        <div class="flex-between" style="font-size:10px;color:var(--muted);margin-bottom:4px;font-family:var(--mono)"><span>Activity completion</span><span>${allActs.length?Math.round((actDone/allActs.length)*100):0}%</span></div>
+        ${bar(allActs.length?(actDone/allActs.length)*100:0,"#3B7FE8",4)}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderReportStreams(active){
+  if(S.streams.length===0) return `<div class="empty">No value streams set up yet.</div>`;
+  return `
+  <div class="flex-col">
+    ${S.streams.map(s=>{
+      const si=active.filter(i=>i.streamId===s.id);
+      const sActs=si.flatMap(i=>S.activities.filter(a=>a.initId===i.id));
+      const sDone=sActs.filter(a=>a.status==="Complete").length;
+      const sPct=sActs.length?Math.round((sDone/sActs.length)*100):0;
+      const agg=ragAgg(si.map(i=>i.rag));
+      const tb=si.reduce((sum,i)=>sum+i.benefit,0);
+      const ta=si.reduce((sum,i)=>sum+(i.actual||0),0);
+      return `<div class="card">
+        <div class="flex-between" style="margin-bottom:10px">
+          <div style="border-left:3px solid ${s.color};padding-left:10px">
+            <div style="font-size:14px;font-weight:700;color:var(--text);font-family:var(--display)">${esc(s.name)}</div>
+            <div style="font-size:10px;color:var(--muted)">Lead: ${esc(s.lead)} · ${si.length} initiatives</div>
+          </div>
+          <div class="flex-row gap-8">${ragChip(agg)}<span style="font-size:12px;color:var(--muted);font-family:var(--mono)">${sPct}%</span></div>
+        </div>
+        ${bar(sPct,s.color,4)}
+        ${tb>0?`<div style="font-size:10px;color:var(--muted);margin-top:8px;font-family:var(--mono)">Benefit: ${fmt(ta)} realised / ${fmt(tb)} target (${Math.round((ta/tb)*100)}%)</div>`:""}
+        <div style="margin-top:12px">
+          <table><thead><tr><th>Initiative</th><th>Status</th><th>Lead</th><th>Benefit</th><th>Activities</th></tr></thead>
+          <tbody>${si.map(i=>{const acts=S.activities.filter(a=>a.initId===i.id);return `<tr class="clickable" onclick="go('init-detail','${i.id}')"><td style="font-weight:600;color:var(--text)">${esc(i.name)}</td><td>${ragChip(i.rag)}</td><td style="color:var(--muted)">${esc(i.lead)}</td><td style="font-family:var(--mono);color:var(--muted)">${i.benefit>0?fmt(i.benefit):"—"}</td><td style="color:var(--muted)">${acts.filter(a=>a.status==="Complete").length}/${acts.length}</td></tr>`;}).join("")}</tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function renderReportUtilisation(active){
+  // Aggregate hours per person across stream team members + initiative leads + activity leads
+  const personMap={};
+  const add=(name,hours,src)=>{
+    if(!name) return;
+    if(!personMap[name]) personMap[name]={hours:0,sources:[]};
+    personMap[name].hours+=hours||0;
+    if(src&&!personMap[name].sources.includes(src)) personMap[name].sources.push(src);
+  };
+  // Stream team members
+  S.streams.forEach(s=>(s.teamMembers||[]).forEach(m=>add(m.name,m.hours,s.name)));
+  // Initiative leads (assume weeklyHours)
+  active.forEach(i=>add(i.lead,i.weeklyHours,i.name));
+  // Activity leads (assume 3hrs/wk per activity)
+  S.activities.forEach(a=>{if(a.lead&&a.status!=="Complete")add(a.lead,3,S.initiatives.find(i=>i.id===a.initId)?.name);});
+
+  const people=Object.entries(personMap).sort((a,b)=>b[1].hours-a[1].hours);
+  const maxH=people.length?people[0][1].hours:1;
+  const totalH=active.reduce((s,i)=>s+i.weeklyHours,0);
+
+  return `
+  <div class="metrics">
+    <div class="metric"><div class="metric-val" style="color:#3B7FE8">${totalH}</div><div class="metric-label">Total Weekly Hours</div><div class="metric-sub">committed to active initiatives</div></div>
+    <div class="metric"><div class="metric-val" style="color:#A78BFA">${people.length}</div><div class="metric-label">People Identified</div><div class="metric-sub">across streams and initiatives</div></div>
+    <div class="metric"><div class="metric-val" style="color:#F59E0B">${people.filter(([,v])=>v.hours>=20).length}</div><div class="metric-label">Potential Overload</div><div class="metric-sub">20+ hours / week</div></div>
+  </div>
+  <div class="card">
+    <span class="slabel">Resource Utilisation — Top Contributors (80/20)</span>
+    ${people.length===0?`<div class="empty">No resource data yet. Add team members to streams and activity leads to see utilisation.</div>`:""}
+    ${people.slice(0,15).map(([name,data])=>{
+      const pct=Math.round((data.hours/maxH)*100);
+      const overload=data.hours>=20;
+      return `<div style="margin-bottom:12px">
+        <div class="flex-between" style="margin-bottom:4px">
+          <div class="flex-row gap-8">
+            <div style="width:28px;height:28px;border-radius:50%;background:${overload?"var(--redD)":"var(--accentD)"};color:${overload?"var(--red)":"var(--accent)"};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${name.charAt(0).toUpperCase()}</div>
+            <div><div style="font-size:12px;font-weight:600;color:var(--text)">${esc(name)}</div><div style="font-size:10px;color:var(--muted)">${data.sources.slice(0,2).map(esc).join(" · ")}</div></div>
+          </div>
+          <span style="font-size:13px;font-weight:700;font-family:var(--mono);color:${overload?"var(--red)":"var(--muted)"}">${data.hours}h/wk${overload?" ⚠":""}</span>
+        </div>
+        ${bar(pct,overload?"#EF4444":"#3B7FE8",5)}
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function renderReportFinancial(active,totalB,totalA){
+  const totalHours=active.reduce((s,i)=>s+i.weeklyHours,0);
+  return `
+  <div class="metrics">
+    <div class="metric"><div class="metric-val" style="color:#3B7FE8">${fmt(totalB)}</div><div class="metric-label">Total Budget Committed</div></div>
+    <div class="metric"><div class="metric-val" style="color:#22C55E">${fmt(totalA)}</div><div class="metric-label">Benefit Realised</div></div>
+    <div class="metric"><div class="metric-val" style="color:#14B8A6">${totalHours}</div><div class="metric-label">Hrs/Wk Committed</div></div>
+  </div>
+  <div class="card mb-12">
+    <span class="slabel">Initiative Financial Tracker</span>
+    ${active.length===0?`<div class="empty">No active initiatives.</div>`:""}
+    <table>
+      <thead><tr><th>Initiative</th><th>Budget</th><th>Realised</th><th>% Achieved</th><th>Hours/wk</th><th>Status</th></tr></thead>
+      <tbody>
+        ${active.map(init=>{
+          const pct=init.benefit>0?Math.round(((init.actual||0)/init.benefit)*100):0;
+          return `<tr class="clickable" onclick="go('init-detail','${init.id}')">
+            <td style="font-weight:600;color:var(--text)">${esc(init.name)}</td>
+            <td style="font-family:var(--mono);color:var(--muted)">${init.benefit>0?fmt(init.benefit):"—"}</td>
+            <td style="font-family:var(--mono);color:#22C55E">${fmt(init.actual||0)}</td>
+            <td><div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--mono);font-size:11px;color:var(--muted)">${pct}%</span>${bar(pct,"#22C55E",3)}</div></td>
+            <td style="font-family:var(--mono);color:var(--muted)">${init.weeklyHours||0}h</td>
+            <td>${ragChip(init.rag)}</td>
+          </tr>`;
+        }).join("")}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function renderReportKPI(active){
+  const allKPIs=active.flatMap(i=>i.kpis.map(k=>({...k,initName:i.name,initId:i.id,rag:i.rag})));
+  return `
+  <div class="card">
+    <span class="slabel">KPI Summary — All Initiatives</span>
+    ${allKPIs.length===0?`<div class="empty">No KPIs logged yet. Add KPIs to your initiatives.</div>`:""}
+    ${allKPIs.map(k=>{
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--bg3)">
+        <div class="flex-between" style="margin-bottom:5px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--text)">${esc(k.name)}</div>
+            <div style="font-size:10px;color:var(--muted)">Initiative: <span class="card-hover" style="color:var(--accent);cursor:pointer" onclick="go('init-detail','${k.initId}')">${esc(k.initName)}</span></div>
+          </div>
+          <div class="flex-row gap-6">${chip(k.type,"#3B7FE8","#1E3D6E")}${ragChip(k.rag)}</div>
+        </div>
+        <div style="display:flex;gap:20px;font-size:11px;font-family:var(--mono)">
+          <div><span style="color:var(--dim)">BASE </span><span style="color:var(--muted)">${esc(k.baseline)}</span></div>
+          <div><span style="color:var(--dim)">TARGET </span><span style="color:var(--muted)">${esc(k.target)}</span></div>
+          <div><span style="color:var(--dim)">NOW </span><span style="color:var(--accent);font-weight:700">${esc(k.current)}</span></div>
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TEMPLATES VIEW
+// ══════════════════════════════════════════════════════════════════════════════
+function renderTemplates(){
+  return `
+  <span class="slabel">Templates Library</span>
+  <div class="grid2" style="gap:12px">
+    ${[
+      ["📋","Initiative Charter","Defines scope, owner, benefit, milestones and KPIs for each initiative entering the portfolio. One page. 30–45 min to complete with EAS support.","initiatives","Open Initiatives →"],
+      ["💼","Business Case (Lite)","Two pages max. Quantifies financial and operational value before committing resources. The filter — nothing enters the portfolio without a completed business case.","initiatives","Open any initiative → Business Case tab"],
+      ["⊙","SteerCo Pre-Read","Auto-generated from live data. Portfolio RAG summary, open decisions, overdue actions. Distribute 48hrs before the meeting. Maximum 2 pages.","meetings","Go to Meetings →"],
+      ["📋","Weekly Workstream Agenda","60-min fixed agenda. Pre-populated with initiative data. Same day, same time, every week. Green statuses take 2 minutes.","meetings","Go to Meetings →"],
+      ["⚑","Risk Register","Log and track risks at programme level. High risks escalate automatically to the "+( S.programme.governanceBody||"SteerCo")+" agenda.","risks","Go to Risk Register →"],
+      ["⊡","Decisions Log","Every decision gets a named owner, a due date, and a mandatory consequence field. Nothing floats without accountability.","decisions","Go to Decisions →"],
+      ["✓","Actions Log","One action = one owner + one date. No collective actions. Overdue items automatically surface in the dashboard.","actions","Go to Actions →"],
+      ["▤","Reporting Templates","Portfolio overview, stream breakdown, resource utilisation (80/20 report), financial tracker, KPI summary. All auto-populated.","reporting","Go to Reporting →"],
+    ].map(([icon,title,desc,view,cta])=>`
+    <div class="card">
+      <div style="font-size:20px;margin-bottom:8px">${icon}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">${title}</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.65;margin-bottom:12px">${desc}</div>
+      <button class="btn btn-sm btn-secondary" onclick="go('${view}')">${cta}</button>
+    </div>`).join("")}
+  </div>
+  <div class="divider" style="margin-top:20px"></div>
+  <div class="card" style="margin-top:14px">
+    <span class="slabel">EEO Language Standard</span>
+    <div style="font-size:12px;color:var(--muted);line-height:1.75;margin-bottom:10px">Write for someone who has been on site since 6am. These substitutions apply to everything written for this programme:</div>
+    <table><thead><tr><th>Avoid</th><th>Use instead</th></tr></thead>
+    <tbody>${[["Cadence","Review rhythm / meeting schedule"],["Embed","Make it stick / make it part of how we work"],["Institutionalise","Make permanent"],["Stakeholder","The right people / everyone this affects"],["Portfolio entry controls","Nothing starts without a charter and a named owner"],["Value stream","Focus area"],["Initiative proliferation","Too many things running at once"],["Stop / Continue / Kill","Pause, Continue or Close"],["Operationalise the mandate","Turn the plan into action"],["Governance cadence","How often we meet and what we review"],["Risk ageing","Risks that have been sitting unresolved"],["Decision velocity","How quickly we make decisions"]].map(([a,b])=>`<tr><td style="color:var(--red);text-decoration:line-through;font-size:11px">${a}</td><td style="color:var(--green);font-size:11px">${b}</td></tr>`).join("")}
+    </tbody></table>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// BOOT — LOAD SAVED DATA, THEN RENDER
+// ══════════════════════════════════════════════════════════════════════════════
+loadData();
+renderNav();
+render();
+</script>
+</body>
+</html>
