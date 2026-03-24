@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EAS PMO Platform v4</title>
+<title>EAS PMO Platform v5</title>
 <style>
 /* ── CR-01/02: COPPER SIGNAL PALETTE + ARIAL FONT ── */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -253,7 +253,7 @@ tr.clickable:hover td{background:var(--panelAlt)}
   </div>
   <nav id="nav"></nav>
   <div class="sb-footer">
-    <span style="font-size:10px">EAS-PMO v4.0</span>
+    <span style="font-size:10px">EAS-PMO v5.0</span>
     <button class="sb-clear" onclick="clearAllData()">⊗ Reset</button>
   </div>
 </div>
@@ -276,26 +276,65 @@ tr.clickable:hover td{background:var(--panelAlt)}
 
 <script>
 // ══════════════════════════════════════════════════════════════════════════════
-// STATE
+// STATE — MULTI-PROGRAMME ARCHITECTURE (NEW-01)
+// Each programme is a self-contained data envelope. S.activePid points to the
+// currently active programme. All data arrays (streams, initiatives, etc.) are
+// accessed via prog() helper which returns the active programme's data.
 // ══════════════════════════════════════════════════════════════════════════════
 const S = {
-  programme:{ name:"", client:"", governanceBody:"SteerCo", lead:"", status:"Active", startDate:"", reportingFreq:"Weekly" },
-  teamMembers:[], // CR-08: programme-level master list
-  streams:[], initiatives:[], activities:[], decisions:[], actions:[], risks:[], meetings:[],
-  view:"setup", param:null,
-  _initFilter:"All", _decTab:"Open", _reportTab:"portfolio", _meetTab:"steerco", _dashFilter:"All", _actFilter:"All", _initTab:"overview", _riskFilter:"All",
+  programmes: [],   // array of programme envelopes
+  activePid: null,  // ID of currently active programme
+  view: "programmes",
+  param: null,
+  _initFilter:"All", _decTab:"Open", _reportTab:"portfolio", _meetTab:"steerco",
+  _dashFilter:"All", _actFilter:"All", _initTab:"overview", _riskFilter:"All",
 };
 
+// Active programme envelope accessor — returns the active programme or an empty shell
+function prog(){
+  return S.programmes.find(p=>p.id===S.activePid) || null;
+}
+// Shorthand accessors — all data reads go through here
+const P = ()=>prog()?.meta||{name:"",client:"",governanceBody:"SteerCo",lead:"",status:"Active",startDate:"",reportingFreq:"Weekly"};
+const TM = ()=>prog()?.teamMembers||[];
+const ST = ()=>prog()?.streams||[];
+const IN = ()=>prog()?.initiatives||[];
+const AC = ()=>prog()?.activities||[];
+const DE = ()=>prog()?.decisions||[];
+const AN = ()=>prog()?.actions||[];
+const RI = ()=>prog()?.risks||[];
+const ME = ()=>prog()?.meetings||[];
+
+// Backwards-compat aliases used throughout the codebase
+Object.defineProperties(S, {
+  programme:  {get:P, set:(v)=>{if(prog())prog().meta=v;}, configurable:true},
+  teamMembers:{get:TM, set:(v)=>{if(prog())prog().teamMembers=v;}, configurable:true},
+  streams:    {get:ST, set:(v)=>{if(prog())prog().streams=v;}, configurable:true},
+  initiatives:{get:IN, set:(v)=>{if(prog())prog().initiatives=v;}, configurable:true},
+  activities: {get:AC, set:(v)=>{if(prog())prog().activities=v;}, configurable:true},
+  decisions:  {get:DE, set:(v)=>{if(prog())prog().decisions=v;}, configurable:true},
+  actions:    {get:AN, set:(v)=>{if(prog())prog().actions=v;}, configurable:true},
+  risks:      {get:RI, set:(v)=>{if(prog())prog().risks=v;}, configurable:true},
+  meetings:   {get:ME, set:(v)=>{if(prog())prog().meetings=v;}, configurable:true},
+});
+
+function newProgEnvelope(id){
+  return {
+    id, created: new Date().toISOString().split("T")[0],
+    meta:{name:"",client:"",governanceBody:"SteerCo",lead:"",status:"Active",startDate:"",reportingFreq:"Weekly"},
+    teamMembers:[],streams:[],initiatives:[],activities:[],
+    decisions:[],actions:[],risks:[],meetings:[]
+  };
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
-// PERSISTENCE — localStorage (STORE_KEY updated to v4 to avoid v3 conflicts)
+// PERSISTENCE — localStorage v5
 // ══════════════════════════════════════════════════════════════════════════════
-const STORE_KEY='eas-pmo-v4';
+const STORE_KEY='eas-pmo-v5';
 function saveData(){
   try{
     localStorage.setItem(STORE_KEY,JSON.stringify({
-      programme:S.programme, teamMembers:S.teamMembers,
-      streams:S.streams, initiatives:S.initiatives, activities:S.activities,
-      decisions:S.decisions, actions:S.actions, risks:S.risks, meetings:S.meetings
+      programmes:S.programmes, activePid:S.activePid
     }));
     showToast();
   }catch(e){console.warn('Save failed',e);}
@@ -303,35 +342,70 @@ function saveData(){
 function loadData(){
   try{
     const raw=localStorage.getItem(STORE_KEY);
-    if(!raw) return;
+    if(!raw){
+      // Check for v4 data and offer migration
+      const v4=localStorage.getItem('eas-pmo-v4');
+      if(v4) migrateFromV4(JSON.parse(v4));
+      return;
+    }
     const d=JSON.parse(raw);
-    if(d.programme) Object.assign(S.programme,d.programme);
-    if(d.teamMembers) S.teamMembers=d.teamMembers;
-    if(d.streams) S.streams=d.streams;
-    if(d.initiatives) S.initiatives=d.initiatives;
-    if(d.activities) S.activities=d.activities;
-    if(d.decisions) S.decisions=d.decisions;
-    if(d.actions) S.actions=d.actions;
-    if(d.risks) S.risks=d.risks;
-    if(d.meetings) S.meetings=d.meetings;
-    // Migrate
-    S.initiatives.forEach(i=>{
-      if(!i.kpis) i.kpis=[];
-      if(!i.milestones) i.milestones=[];
-      if(!i.benefitLog) i.benefitLog=[]; // CR-14
-      if(!i.businessCase) i.businessCase={problem:"",baseline:"",actions:"",benefit:"",opBenefit:"",cost:"",payback:"",risks:"",recommendation:""};
-      if(!i.weeklyUpdates) i.weeklyUpdates=[]; // CR-17
+    if(d.programmes) S.programmes=d.programmes;
+    if(d.activePid) S.activePid=d.activePid;
+    // Verify activePid still exists
+    if(!S.programmes.find(p=>p.id===S.activePid)) S.activePid=S.programmes[0]?.id||null;
+    // Migrate each programme envelope
+    S.programmes.forEach(p=>{
+      p.initiatives.forEach(i=>{
+        if(!i.kpis)i.kpis=[];
+        if(!i.milestones)i.milestones=[];
+        if(!i.benefitLog)i.benefitLog=[];
+        if(!i.businessCase)i.businessCase={problem:"",baseline:"",actions:"",benefit:"",opBenefit:"",cost:"",payback:"",risks:"",recommendation:""};
+        if(!i.weeklyUpdates)i.weeklyUpdates=[];
+      });
+      p.streams.forEach(s=>{if(!s.teamMembers)s.teamMembers=[];if(!s.objectives)s.objectives="";});
+      p.decisions.forEach(d=>{if(!d.decisionDate)d.decisionDate="";});
+      p.actions.forEach(a=>{if(!a.sourceMeeting)a.sourceMeeting="";});
     });
-    S.streams.forEach(s=>{if(!s.teamMembers)s.teamMembers=[];if(!s.objectives)s.objectives="";});
-    S.decisions.forEach(d=>{if(!d.decisionDate)d.decisionDate="";});
-    S.actions.forEach(a=>{if(!a.sourceMeeting)a.sourceMeeting="";});
   }catch(e){console.warn('Load failed',e);}
+}
+function migrateFromV4(d){
+  // Wrap v4 single-programme data into a v5 envelope
+  const id='x'+Date.now();
+  const env=newProgEnvelope(id);
+  if(d.programme) env.meta=d.programme;
+  if(d.teamMembers) env.teamMembers=d.teamMembers;
+  if(d.streams) env.streams=d.streams;
+  if(d.initiatives){
+    d.initiatives.forEach(i=>{
+      if(!i.benefitLog)i.benefitLog=[];
+      if(!i.weeklyUpdates)i.weeklyUpdates=[];
+    });
+    env.initiatives=d.initiatives;
+  }
+  if(d.activities) env.activities=d.activities;
+  if(d.decisions) env.decisions=d.decisions;
+  if(d.actions) env.actions=d.actions;
+  if(d.risks) env.risks=d.risks;
+  if(d.meetings) env.meetings=d.meetings;
+  S.programmes=[env];
+  S.activePid=id;
+  saveData();
 }
 function clearAllData(){
   if(!confirm('Clear ALL programme data and start fresh? This cannot be undone.')) return;
   localStorage.removeItem(STORE_KEY); location.reload();
 }
+function clearCurrentProgramme(){
+  const p=prog();
+  if(!p) return;
+  if(!confirm(`Clear all data for "${p.meta.name||'this programme'}"? This cannot be undone.`)) return;
+  const idx=S.programmes.indexOf(p);
+  S.programmes.splice(idx,1);
+  S.activePid=S.programmes[0]?.id||null;
+  saveData(); renderNav(); render();
+}
 window.clearAllData=clearAllData;
+window.clearCurrentProgramme=clearCurrentProgramme;
 
 let _tt;
 function showToast(){
@@ -351,11 +425,11 @@ const today=()=>new Date().toISOString().split("T")[0];
 const fmtDate=d=>{if(!d||d==="—")return"—";const p=d.split("-");return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d;};
 const isOverdue=due=>due&&due<today();
 
-// CR-08: get all team members across programme + streams
+// CR-08: get all team members from active programme (master list + stream members)
 function allPeople(){
   const pm=new Map();
-  S.teamMembers.forEach(m=>pm.set(m.name,m));
-  S.streams.forEach(s=>(s.teamMembers||[]).forEach(m=>pm.set(m.name,m)));
+  (prog()?.teamMembers||[]).forEach(m=>pm.set(m.name,m));
+  (prog()?.streams||[]).forEach(s=>(s.teamMembers||[]).forEach(m=>pm.set(m.name,m)));
   return [...pm.values()].sort((a,b)=>a.name.localeCompare(b.name));
 }
 
@@ -428,24 +502,19 @@ function statusBadge(level){
   return `<span style="background:${s.bg};color:${s.c};border:1px solid ${s.border};padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700">${esc(level)}</span>`;
 }
 
-// CR-08: person dropdown helper
+// NEW-02: person dropdown — NO manual entry, enforces master list
 function personSelect(id,val="",placeholder="Select person"){
   const people=allPeople();
-  return `<select class="fsel" id="${id}">
-    <option value="">${placeholder}</option>
+  const nopeople=people.length===0;
+  return `<select class="fsel" id="${id}"${nopeople?' disabled':''}>
+    <option value="">${nopeople?"No team members yet — add in Setup first":placeholder}</option>
     ${people.map(p=>`<option value="${esc(p.name)}"${p.name===val?" selected":""}>${esc(p.name)}${p.role?" — "+esc(p.role):""}</option>`).join("")}
-    <option value="__other__">+ Enter manually…</option>
   </select>
-  <input class="finp" id="${id}-manual" style="display:none;margin-top:6px" placeholder="Type name manually">
-  <script>document.getElementById('${id}').addEventListener('change',function(){
-    document.getElementById('${id}-manual').style.display=this.value==='__other__'?'block':'none';
-  });<\/script>`;
+  ${nopeople?`<div style="font-size:11px;color:var(--amber);margin-top:4px">⚠ Go to Setup → Team Member Master List and add people first, then return here.</div>`:''}`;
 }
 function getPersonVal(id){
   const sel=document.getElementById(id);
-  if(!sel) return "";
-  if(sel.value==="__other__"){const m=document.getElementById(id+"-manual");return m?m.value.trim():"";}
-  return sel.value;
+  return sel?sel.value:"";
 }
 
 // CR-04: block 'e', '+', '-' on number inputs
@@ -456,7 +525,8 @@ function blockExpInput(e){if(["e","E","+","-"].includes(e.key))e.preventDefault(
 // ══════════════════════════════════════════════════════════════════════════════
 const NAV=[
   {section:"Programme"},
-  {id:"setup",icon:"⊞",label:"Setup"},
+  {id:"programmes",icon:"◫",label:"All Programmes"},
+  {id:"setup",icon:"⊞",label:"Programme Setup"},
   {id:"dashboard",icon:"◉",label:"Dashboard"},
   {section:"Work"},
   {id:"streams",icon:"◈",label:"Value Streams"},
@@ -473,23 +543,34 @@ const NAV=[
 ];
 
 function renderNav(){
-  const openDec=S.decisions.filter(d=>d.status==="Open"||d.status==="Overdue").length;
-  const overdueAct=S.actions.filter(a=>isOverdue(a.due)&&a.status!=="Done").length;
-  const highRisk=S.risks.filter(r=>r.level==="High"&&r.status!=="Closed").length;
+  const hasProg=!!prog();
+  const openDec=hasProg?S.decisions.filter(d=>d.status==="Open"||d.status==="Overdue").length:0;
+  const overdueAct=hasProg?S.actions.filter(a=>isOverdue(a.due)&&a.status!=="Done").length:0;
+  const highRisk=hasProg?S.risks.filter(r=>r.level==="High"&&r.status!=="Closed").length:0;
   const badges={decisions:openDec,actions:overdueAct,risks:highRisk};
   document.getElementById("nav").innerHTML=NAV.map(item=>{
     if(item.section) return `<span class="nav-section">${item.section}</span>`;
+    const disabled=!hasProg&&item.id!=="programmes";
     const active=S.view===item.id||(item.id==="streams"&&(S.view==="stream-detail"||S.view==="stream-edit"))||(item.id==="initiatives"&&S.view==="init-detail");
     const b=badges[item.id]||0;
-    return `<button class="nav-btn${active?" active":""}" onclick="go('${item.id}')">
+    return `<button class="nav-btn${active?" active":""}${disabled?" disabled":""}" onclick="${disabled?"":"go('"+item.id+"')"}" style="${disabled?"opacity:.35;cursor:not-allowed":""}">
       <span class="nav-icon">${item.icon}</span><span style="flex:1">${item.label}</span>
       ${b>0?`<span class="nav-badge${item.id==="actions"||item.id==="risks"?" red":""}">${b}</span>`:""}
     </button>`;
   }).join("");
-  document.getElementById("sb-prog-name").textContent=S.programme.name||"No programme set";
+  const p=prog();
+  const progEl=document.getElementById("sb-prog-name");
+  if(progEl) progEl.textContent=p?.meta?.name||"No programme — click to select";
 }
 
 function go(view,param=null){
+  // Guard: most views require an active programme
+  const protectedViews=["setup","dashboard","streams","stream-detail","stream-edit","initiatives","init-detail","activities-all","meetings","decisions","actions","risks","reporting","templates"];
+  if(protectedViews.includes(view)&&!prog()){
+    S.view="programmes"; S.param=null;
+    renderNav(); render();
+    return;
+  }
   S.view=view; S.param=param;
   if(view!=="init-detail") S._initTab="overview";
   renderNav(); render();
@@ -519,7 +600,8 @@ function render(){
   const el=document.getElementById("content");
   el.className="fade"; void el.offsetWidth;
   const v=S.view;
-  if(v==="setup")el.innerHTML=renderSetup();
+  if(v==="programmes")el.innerHTML=renderProgrammes();
+  else if(v==="setup")el.innerHTML=renderSetup();
   else if(v==="dashboard")el.innerHTML=renderDashboard();
   else if(v==="streams")el.innerHTML=renderStreams();
   else if(v==="stream-detail")el.innerHTML=renderStreamDetail(S.param);
@@ -537,13 +619,151 @@ function render(){
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// PROGRAMMES VIEW — list all programmes, switch active, create new
+// ══════════════════════════════════════════════════════════════════════════════
+function renderProgrammes(){
+  const progs=S.programmes;
+  return `
+  <div class="flex-between mb-20">
+    <div>
+      <h2 class="page-title">Programmes</h2>
+      <p style="color:var(--muted);font-size:13px">Each programme is a separate, self-contained workspace. Select one to work in it, or create a new one.</p>
+    </div>
+    <button class="btn btn-primary" onclick="showCreateProgramme()">+ New Programme</button>
+  </div>
+  ${progs.length===0?`
+  <div class="empty" style="padding:60px">
+    <div style="font-size:48px;margin-bottom:16px">◫</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:8px">No programmes yet</div>
+    <div style="font-size:13px;margin-bottom:20px">Create your first programme to get started.</div>
+    <button class="btn btn-primary" onclick="showCreateProgramme()">+ Create Programme</button>
+  </div>`:`
+  <div class="grid2" style="gap:14px">
+    ${progs.map(p=>{
+      const isActive=p.id===S.activePid;
+      const inits=p.initiatives?.filter(i=>i.portfolioStatus==="Active")||[];
+      const openD=p.decisions?.filter(d=>d.status==="Open"||d.status==="Overdue")||[];
+      return `<div class="card" style="border-top:4px solid ${isActive?"var(--copper)":"var(--border)"}">
+        <div class="flex-between mb-8">
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;margin-bottom:3px">${esc(p.meta?.name||"Unnamed Programme")}</div>
+            <div style="font-size:12px;color:var(--muted)">${esc(p.meta?.client||"No client set")} · Lead: ${esc(p.meta?.lead||"—")}</div>
+          </div>
+          ${isActive?`<span style="background:var(--copperL);color:var(--copper);border:1px solid var(--copperBorder);padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700">ACTIVE</span>`:""}
+        </div>
+        <div style="display:flex;gap:16px;margin-bottom:14px;font-size:12px;color:var(--muted)">
+          <span><strong style="color:var(--text)">${p.streams?.length||0}</strong> streams</span>
+          <span><strong style="color:var(--text)">${inits.length}</strong> active initiatives</span>
+          <span><strong style="color:${openD.length>0?"var(--amber)":"var(--muted)"}">${openD.length}</strong> open decisions</span>
+          <span style="color:var(--dim)">Created ${fmtDate(p.created)||"—"}</span>
+        </div>
+        <div class="flex-row" style="gap:8px">
+          ${isActive?`<button class="btn btn-primary btn-sm" onclick="go('dashboard')">Open Dashboard →</button>`
+            :`<button class="btn btn-secondary btn-sm" onclick="switchProgramme('${p.id}')">Switch to this programme</button>`}
+          <button class="btn btn-ghost btn-sm" onclick="showEditProgrammeMeta('${p.id}')">Edit details</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProgramme('${p.id}')">Delete</button>
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`}`;
+}
+
+function showCreateProgramme(){
+  openModal("Create New Programme",`
+    <div class="callout callout-tip" style="margin-bottom:12px">Each programme is a completely separate workspace. Streams, initiatives, team members and all data are isolated per programme.</div>
+    <div class="frow"><label class="flabel">Programme Name</label><input class="finp" id="cp-name" placeholder="e.g. WBHO Reservoir EEO"></div>
+    <div class="frow"><label class="flabel">Client Organisation</label><input class="finp" id="cp-client" placeholder="e.g. WBHO"></div>
+    <div class="fgrid2">
+      <div class="frow"><label class="flabel">Programme Lead</label><input class="finp" id="cp-lead" placeholder="Named person"></div>
+      <div class="frow"><label class="flabel">Governance Body</label><input class="finp" id="cp-gb" placeholder="e.g. SteerCo" value="SteerCo"></div>
+      <div class="frow"><label class="flabel">Start Date</label><input class="finp" type="date" id="cp-date"></div>
+      <div class="frow"><label class="flabel">Update Frequency</label>
+        <select class="fsel" id="cp-freq"><option>Weekly</option><option>Fortnightly</option><option>Monthly</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createProgramme()">Create Programme</button>
+    </div>`);
+}
+window.showCreateProgramme=showCreateProgramme;
+
+function createProgramme(){
+  const name=document.getElementById("cp-name").value.trim();
+  if(!name) return alert("Programme name is required.");
+  const id='x'+Date.now();
+  const env=newProgEnvelope(id);
+  env.meta.name=name;
+  env.meta.client=document.getElementById("cp-client").value.trim();
+  env.meta.lead=document.getElementById("cp-lead").value.trim();
+  env.meta.governanceBody=document.getElementById("cp-gb").value.trim()||"SteerCo";
+  env.meta.startDate=document.getElementById("cp-date").value;
+  env.meta.reportingFreq=document.getElementById("cp-freq").value;
+  env.meta.status="Active";
+  S.programmes.push(env);
+  S.activePid=id;
+  closeModal(); saveData(); renderNav(); go("setup");
+}
+window.createProgramme=createProgramme;
+
+function switchProgramme(id){
+  S.activePid=id;
+  S._dashFilter="All"; S._initFilter="All"; S._decTab="Open";
+  saveData(); renderNav(); go("dashboard");
+}
+window.switchProgramme=switchProgramme;
+
+function showEditProgrammeMeta(id){
+  const p=S.programmes.find(p=>p.id===id);
+  if(!p) return;
+  openModal("Edit Programme Details",`
+    <div class="frow"><label class="flabel">Programme Name</label><input class="finp" id="ep-name" value="${esc(p.meta.name)}"></div>
+    <div class="frow"><label class="flabel">Client Organisation</label><input class="finp" id="ep-client" value="${esc(p.meta.client||'')}"></div>
+    <div class="fgrid2">
+      <div class="frow"><label class="flabel">Programme Lead</label><input class="finp" id="ep-lead" value="${esc(p.meta.lead||'')}"></div>
+      <div class="frow"><label class="flabel">Governance Body</label><input class="finp" id="ep-gb" value="${esc(p.meta.governanceBody||'SteerCo')}"></div>
+      <div class="frow"><label class="flabel">Start Date</label><input class="finp" type="date" id="ep-date" value="${p.meta.startDate||''} "></div>
+      <div class="frow"><label class="flabel">Status</label>
+        <select class="fsel" id="ep-status">${["Active","Setup","Closing"].map(o=>`<option${p.meta.status===o?" selected":""}>${o}</option>`).join("")}</select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProgrammeMeta('${id}')">Save</button>
+    </div>`);
+}
+window.showEditProgrammeMeta=showEditProgrammeMeta;
+
+function saveProgrammeMeta(id){
+  const p=S.programmes.find(p=>p.id===id);
+  if(!p) return;
+  p.meta.name=document.getElementById("ep-name").value.trim()||p.meta.name;
+  p.meta.client=document.getElementById("ep-client").value.trim();
+  p.meta.lead=document.getElementById("ep-lead").value.trim();
+  p.meta.governanceBody=document.getElementById("ep-gb").value.trim()||"SteerCo";
+  p.meta.startDate=document.getElementById("ep-date").value.trim();
+  p.meta.status=document.getElementById("ep-status").value;
+  closeModal(); saveData(); renderNav(); render();
+}
+window.saveProgrammeMeta=saveProgrammeMeta;
+
+function deleteProgramme(id){
+  const p=S.programmes.find(p=>p.id===id);
+  if(!confirm(`Delete programme "${p?.meta?.name||'this programme'}" and ALL its data? This cannot be undone.`)) return;
+  S.programmes=S.programmes.filter(p=>p.id!==id);
+  if(S.activePid===id) S.activePid=S.programmes[0]?.id||null;
+  saveData(); renderNav(); render();
+}
+window.deleteProgramme=deleteProgramme;
+
+// ══════════════════════════════════════════════════════════════════════════════
 // SETUP
 // ══════════════════════════════════════════════════════════════════════════════
 function renderSetup(){
-  const p=S.programme;
+  const p=P();
   return `
   <div class="flex-between mb-16">
-    <div><h2 class="page-title">Programme Setup</h2><p style="color:var(--muted);font-size:13px">Configure your programme and build your team member list</p></div>
+    <div><h2 class="page-title">Programme Setup</h2><p style="color:var(--muted);font-size:13px">Configure your programme and build your team member list · <button class="btn btn-ghost btn-sm no-print" onclick="go('programmes')" style="padding:2px 8px;font-size:11px">← All Programmes</button></p></div>
   </div>
   <div class="grid2" style="gap:20px">
     <div>
@@ -552,7 +772,7 @@ function renderSetup(){
         <div class="frow"><label class="flabel">Programme Name</label><input class="finp" id="s-name" value="${esc(p.name)}" placeholder="e.g. EEO Activation Programme"></div>
         <div class="frow"><label class="flabel">Client Organisation</label><input class="finp" id="s-client" value="${esc(p.client)}" placeholder="e.g. Enza Construction"></div>
         <div class="fgrid2">
-          <div class="frow"><label class="flabel">Programme Lead</label><input class="finp" id="s-lead" value="${esc(p.lead)}" placeholder="Named person"></div>
+          <div class="frow"><label class="flabel">Programme Lead</label>${personSelect("s-lead",p.lead||"","Select programme lead")}</div>
           <div class="frow"><label class="flabel">Governance Body Label</label><input class="finp" id="s-gb" value="${esc(p.governanceBody)}" placeholder="e.g. SteerCo"></div>
           <div class="frow"><label class="flabel">Start Date</label><input class="finp" type="date" id="s-date" value="${esc(p.startDate)}"></div>
           <div class="frow"><label class="flabel">Status</label>
@@ -624,7 +844,7 @@ function renderSetup(){
           ["8","Log decisions with named owners and consequence fields"],
           ["9","Use Reporting for governance views and resource utilisation"],
         ].map(([n,t])=>`<div style="display:flex;gap:10px;margin-bottom:9px"><span style="background:var(--copper);color:#fff;border-radius:50%;width:20px;height:20px;min-width:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">${n}</span><span>${t}</span></div>`).join("")}
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--dim)">Data saves automatically. Use ⊗ Reset (bottom left) to start fresh for a new client.</div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--dim)">Data saves automatically per programme. Switch programmes using "All Programmes" in the nav. Dates display in DD/MM/YYYY format throughout.</div>
       </div>
     </div>
   </div>`;
@@ -638,13 +858,15 @@ function toggleQS(){
 window.toggleQS=toggleQS;
 
 function saveProgramme(){
-  S.programme.name=document.getElementById("s-name").value.trim();
-  S.programme.client=document.getElementById("s-client").value.trim();
-  S.programme.lead=document.getElementById("s-lead").value.trim();
-  S.programme.governanceBody=document.getElementById("s-gb").value.trim()||"SteerCo";
-  S.programme.startDate=document.getElementById("s-date").value;
-  S.programme.status=document.getElementById("s-status").value;
-  S.programme.reportingFreq=document.getElementById("s-freq").value;
+  const p=prog();
+  if(!p) return;
+  p.meta.name=document.getElementById("s-name").value.trim();
+  p.meta.client=document.getElementById("s-client").value.trim();
+  p.meta.lead=getPersonVal("s-lead")||document.getElementById("s-lead")?.value?.trim()||"";
+  p.meta.governanceBody=document.getElementById("s-gb").value.trim()||"SteerCo";
+  p.meta.startDate=document.getElementById("s-date").value;
+  p.meta.status=document.getElementById("s-status").value;
+  p.meta.reportingFreq=document.getElementById("s-freq").value;
   saveData(); renderNav(); render();
 }
 window.saveProgramme=saveProgramme;
@@ -878,10 +1100,10 @@ function renderDashboard(){
 
   return `
   <div class="prog-banner">
-    <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#9CA3AF;text-transform:uppercase;margin-bottom:6px">Active Programme</div>
-    <div style="font-size:22px;font-weight:700;color:#F9FAFB;margin-bottom:12px">${esc(S.programme.name||"No programme name set")}</div>
+    <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#9CA3AF;text-transform:uppercase;margin-bottom:6px">Active Programme <span onclick="go('programmes')" style="cursor:pointer;margin-left:8px;background:rgba(255,255,255,.1);padding:1px 8px;border-radius:8px;font-size:9px;letter-spacing:.5px">Switch ↔</span></div>
+    <div style="font-size:22px;font-weight:700;color:#F9FAFB;margin-bottom:12px">${esc(P().name||"No programme name set")}</div>
     <div style="display:flex;gap:24px;flex-wrap:wrap">
-      ${[["Lead",S.programme.lead||"—"],["Governance",S.programme.governanceBody||"SteerCo"],["Status",S.programme.status||"Active"],["Since",fmtDate(S.programme.startDate)||"—"],["Cadence",S.programme.reportingFreq||"Weekly"]].map(([l,v])=>`
+      ${[["Lead",P().lead||"—"],["Governance",P().governanceBody||"SteerCo"],["Status",P().status||"Active"],["Since",fmtDate(P().startDate)||"—"],["Cadence",P().reportingFreq||"Weekly"]].map(([l,v])=>`
       <div><div style="font-size:9px;color:#9CA3AF;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">${l}</div><div style="font-size:12px;color:#E5E7EB">${esc(v)}</div></div>`).join("")}
     </div>
   </div>
@@ -1176,6 +1398,51 @@ function addInit(){
 }
 window.addInit=addInit;
 
+// NEW: Edit initiative key details (previously missing — Caroline / CR-01 remaining gap)
+function showEditInit(id){
+  const init=S.initiatives.find(i=>i.id===id);
+  if(!init) return;
+  openModal("Edit Initiative Details",`
+    <div class="frow"><label class="flabel">Initiative Name</label><input class="finp" id="ei-name" value="${esc(init.name)}"></div>
+    <div class="frow"><label class="flabel">Focus Area (Value Stream)</label>
+      <select class="fsel" id="ei-stream">
+        ${S.streams.map(s=>`<option value="${s.id}"${s.id===init.streamId?" selected":""}>${esc(s.name)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="frow"><label class="flabel">Initiative Lead</label>${personSelect("ei-lead",init.lead)}</div>
+    <div class="fgrid2">
+      <div class="frow"><label class="flabel">Weekly Hours</label><input class="finp" type="number" id="ei-hours" value="${init.weeklyHours||0}" min="0" onkeydown="blockExpInput(event)"></div>
+      <div class="frow"><label class="flabel">Financial Benefit Target (R)</label><input class="finp" type="number" id="ei-benefit" value="${init.benefit||0}" min="0" onkeydown="blockExpInput(event)"></div>
+      <div class="frow"><label class="flabel">Priority Score (1=low, 5=high)</label><input class="finp" type="number" id="ei-priority" value="${(init.priority||3).toFixed(1)}" min="1" max="5" step="0.1" onkeydown="blockExpInput(event)"></div>
+      <div class="frow"><label class="flabel">Portfolio Status</label>
+        <select class="fsel" id="ei-portstatus">${["Active","Proposed","On Hold"].map(o=>`<option${init.portfolioStatus===o?" selected":""}>${o}</option>`).join("")}</select>
+      </div>
+      <div class="frow"><label class="flabel">Planned Start</label><input class="finp" type="date" id="ei-start" value="${init.plannedStart||""}"></div>
+      <div class="frow"><label class="flabel">Planned End</label><input class="finp" type="date" id="ei-end" value="${init.plannedEnd||""}"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveInitEdit('${id}')">Save Changes</button>
+    </div>`);
+}
+window.showEditInit=showEditInit;
+
+function saveInitEdit(id){
+  const init=S.initiatives.find(i=>i.id===id);
+  if(!init) return;
+  init.name=document.getElementById("ei-name").value.trim()||init.name;
+  init.streamId=document.getElementById("ei-stream").value;
+  init.lead=getPersonVal("ei-lead")||init.lead;
+  init.weeklyHours=parseInt(document.getElementById("ei-hours").value)||0;
+  init.benefit=parseInt(document.getElementById("ei-benefit").value)||0;
+  init.priority=parseFloat(document.getElementById("ei-priority").value)||3.0;
+  init.portfolioStatus=document.getElementById("ei-portstatus").value;
+  init.plannedStart=document.getElementById("ei-start").value;
+  init.plannedEnd=document.getElementById("ei-end").value;
+  closeModal(); saveData(); render();
+}
+window.saveInitEdit=saveInitEdit;
+
 // ══════════════════════════════════════════════════════════════════════════════
 // INITIATIVE DETAIL — 7 tabs including CR-17 Weekly Update
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1202,6 +1469,7 @@ function renderInitDetail(id){
     <div class="flex-row" style="gap:8px">
       ${ragChip(init.rag)}
       <button class="btn btn-secondary btn-sm" onclick="showUpdateStatus('${id}')">Update Status</button>
+      <button class="btn btn-ghost btn-sm" onclick="showEditInit('${id}')">Edit Details</button>
       <button class="btn btn-danger btn-sm" onclick="deleteInit('${id}')">Delete</button>
     </div>
   </div>
@@ -1848,7 +2116,7 @@ window.setAF=setAF;
 // ══════════════════════════════════════════════════════════════════════════════
 function renderMeetings(){
   const tab=S._meetTab||"steerco";
-  const gb=S.programme.governanceBody||"SteerCo";
+  const gb=P().governanceBody||"SteerCo";
   return `
   <div class="flex-between mb-12">
     <h2 class="page-title">Meetings & Governance</h2>
@@ -1946,11 +2214,11 @@ function renderMeetingTemplates(){
   return `
   <div class="grid2" style="gap:12px">
     ${[
-      ["⊙",`${S.programme.governanceBody||"SteerCo"} Pre-Read`,"Auto-generated from live data. Portfolio RAG, open decisions, overdue actions. 48hrs before. Max 2 pages.","steerco","Go to Agenda →"],
+      ["⊙",`${P().governanceBody||"SteerCo"} Pre-Read`,"Auto-generated from live data. Portfolio RAG, open decisions, overdue actions. 48hrs before. Max 2 pages.","steerco","Go to Agenda →"],
       ["📋","Workstream Review","60 min fixed. Same day/time weekly. Green = 2 min. Meeting is for Amber and Red.","stream","Go to Workstream →"],
       ["◇","Initiative Charter","Scope, owner, benefit, milestones, KPIs. Add inside any initiative.","initiatives","Open Initiative →"],
       ["💼","Business Case (Lite)","Two pages. Quantify the problem before committing people. Nothing enters without one.","initiatives","Initiative → Business Case →"],
-      ["⚑","Risk Register","H/M/L probability. High risks escalate to "+( S.programme.governanceBody||"SteerCo")+" automatically.","risks","Go to Risk Register →"],
+      ["⚑","Risk Register","H/M/L probability. High risks escalate to "+( P().governanceBody||"SteerCo")+" automatically.","risks","Go to Risk Register →"],
       ["⊡","Decisions Log","Named owner, due date, mandatory consequence. Nothing floats.","decisions","Go to Decisions →"],
       ["✓","Actions Log","One action = one owner + one date. Overdue surfaces in dashboard.","actions","Go to Actions →"],
       ["▤","Reporting","Portfolio, stream, utilisation, financial, KPI views — all auto-populated.","reporting","Go to Reporting →"],
@@ -2046,7 +2314,7 @@ function convertMeetingActions(meetingId){
 window.convertMeetingActions=convertMeetingActions;
 
 function showLogMeeting(){
-  const gb=S.programme.governanceBody||"SteerCo";
+  const gb=P().governanceBody||"SteerCo";
   openModal("Log Meeting",`
     <div class="frow"><label class="flabel">Meeting Type</label>
       <select class="fsel" id="m-mtype"><option>${gb}</option><option>Workstream Review</option><option>Initiative Review</option><option>Ad-hoc</option></select>
@@ -2139,7 +2407,7 @@ function showAddDecision(){
       <div class="frow"><label class="flabel">Due by <span style="font-size:10px;color:var(--amber);font-weight:400">(becomes Overdue after this date)</span></label><input class="finp" type="date" id="m-ddue"></div>
       <!-- CR-12: level tagging -->
       <div class="frow"><label class="flabel">Level</label>
-        <select class="fsel" id="m-dlevel"><option>Initiative</option><option>Activity</option><option>Stream</option><option>Programme</option><option>${S.programme.governanceBody||"SteerCo"}</option></select>
+        <select class="fsel" id="m-dlevel"><option>Initiative</option><option>Activity</option><option>Stream</option><option>Programme</option><option>${P().governanceBody||"SteerCo"}</option></select>
       </div>
       <div class="frow"><label class="flabel">Related Initiative</label>
         <select class="fsel" id="m-drelated"><option value="">None</option>${S.initiatives.map(i=>`<option value="${i.id}">${esc(i.name)}</option>`).join("")}</select>
@@ -2318,7 +2586,7 @@ function renderRisks(){
     <h2 class="page-title">Risk Register</h2>
     <button class="btn btn-primary btn-sm" onclick="showAddRisk()">+ Log Risk</button>
   </div>
-  ${high.length>0?`<div class="callout callout-warn" style="margin-bottom:12px">${high.length} High/Critical risk${high.length>1?"s":""} open — escalate to ${S.programme.governanceBody||"SteerCo"} if unresolved.</div>`:""}
+  ${high.length>0?`<div class="callout callout-warn" style="margin-bottom:12px">${high.length} High/Critical risk${high.length>1?"s":""} open — escalate to ${P().governanceBody||"SteerCo"} if unresolved.</div>`:""}
   <div class="filter-pills">
     ${["All","Critical","High","Medium","Low","Closed"].map(f2=>`<button class="pill${f===f2?" active":""}" onclick="setRF('${f2}')">${f2}</button>`).join("")}
   </div>
@@ -2670,7 +2938,7 @@ function renderTemplates(){
       ["📋","Initiative Charter","Defines scope, owner, benefit, milestones and KPIs. One page. 30–45 min to complete.","init-detail",null,"Select initiative first →"],
       ["💼","Business Case (Lite)","Two pages max. Quantify the problem before committing resources. Nothing enters the portfolio without this.","initiatives",null,"Go to Initiatives →"],
       // CR-18: Fixed navigation
-      ["⊙",`${S.programme.governanceBody||"SteerCo"} Pre-Read`,"Auto-generated from live data. Distribute 48hrs before. Max 2 pages.","meetings","steerco",`Go to Meetings → ${S.programme.governanceBody||"SteerCo"} Agenda`],
+      ["⊙",`${P().governanceBody||"SteerCo"} Pre-Read`,"Auto-generated from live data. Distribute 48hrs before. Max 2 pages.","meetings","steerco",`Go to Meetings → ${P().governanceBody||"SteerCo"} Agenda`],
       ["📋","Workstream Review Agenda","60 min fixed. Same day/time weekly. Green = 2 min. Meeting is for Amber and Red.","meetings","stream","Go to Meetings → Workstream Agenda"],
       ["⚑","Risk Register","H/M/L/Critical probability. High risks surface on the dashboard.","risks",null,"Go to Risk Register →"],
       ["⊡","Decisions Log","Named owner, due date, consequence. Nothing floats without accountability.","decisions",null,"Go to Decisions →"],
@@ -2710,6 +2978,9 @@ function renderTemplates(){
 // BOOT — CR-x: load saved data, migrate, render
 // ══════════════════════════════════════════════════════════════════════════════
 loadData();
+// If no active programme, start on programmes view; else go to dashboard
+if(!prog()){ S.view="programmes"; }
+else { S.view="dashboard"; }
 renderNav();
 render();
 </script>
